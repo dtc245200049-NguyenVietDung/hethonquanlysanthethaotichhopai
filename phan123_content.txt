@@ -1,0 +1,179 @@
+DỰ ÁN: HỆ THỐNG QUẢN LÝ SÂN THỂ THAO TÍCH HỢP AI 
+PHẦN 1: KẾ HOẠCH PHƯƠNG PHÁP KHẢO SÁT VÀ THU THẬP YÊU CẦU NGHIỆP VỤ (REQUIREMENT ELICITATION)
+MỤC TIÊU PHẠM VI KHẢO SÁT
+Phần này tập trung hoàn toàn vào công tác Khảo sát yêu cầu (Requirement Elicitation): xác định rõ các phương pháp thu thập dữ liệu được lựa chọn, đối tượng tham gia và toàn bộ thông tin nghiệp vụ thực tế thu thập được tại các cụm sân thể thao. Tài liệu hoàn toàn dừng ở bước thu thập và ghi nhận thực trạng, tuyệt đối chưa đi vào thiết kế giải pháp hay thiết kế hệ thống.
+1.1. PHƯƠNG PHÁP KHẢO SÁT LỰA CHỌN (ELICITATION TECHNIQUES)
+Để đảm bảo dữ liệu đầu vào khách quan, đầy đủ và phản ánh đúng thực tế vận hành, đội ngũ Phân tích Nghiệp vụ (BA) áp dụng 5 phương pháp khảo sát tiêu chuẩn:
+1.2. NỘI DUNG THU THẬP TỪ KHẢO SÁT NGHIỆP VỤ THỰC TẾ
+1.2.1. Khảo sát Chủ sân & Quản lý (Phương pháp: Phỏng vấn sâu 1-on-1)
+Quy trình Quản lý Lịch & Khách hàng hiện tại:
+Phương thức ghi nhận lịch: Sổ tay ghi chép, file Excel dùng chung, hoặc phần mềm quản lý bán hàng truyền thống.
+Chính sách đặt cọc: Yêu cầu chuyển khoản trước 30% – 50% tiền sân. Quy trình hoàn cọc hoặc dời lịch khi thời tiết xấu (mưa bão).
+Quy trình tiếp nhận khách vãng lai (walk-in): Nhân viên tự sắp xếp vào các ô giờ trống đột xuất.
+Quy trình Quản lý Dịch vụ & Kho hàng:
+Cách thức ghi nhận bán nước uống, cho thuê phụ kiện (áo búp, giày, vợt) và cộng dồn vào tiền sân.
+Quy trình kiểm kê tồn kho cuối ngày và đối soát với doanh thu thực thu.
+Các điểm nghẽn nghiệp vụ thu nhận được:
+Nỗi sợ thất thoát tiền mặt do nhân viên trực ca "cho đá chui" rồi tự thu tiền riêng.
+Tình trạng đặt trùng lịch (Overbooking) do nhận lịch qua nhiều kênh phân tán (điện thoại, Zalo, Fanpage).
+Khó khăn trong việc theo dõi báo cáo doanh thu theo thời gian thực khi không có mặt tại sân.
+1.2.2. Khảo sát Mô hình Giá & Khung giờ Khai thác (Phương pháp: Phỏng vấn sâu & Document Analysis)
+Phân tích Khung giờ Vận hành:
+Khung giờ cao điểm (Peak hours): 17:00 – 21:00 ngày tuần và toàn bộ ngày Thứ 7, Chủ Nhật.
+Khung giờ thấp điểm (Off-peak): 08:00 – 16:00 các ngày trong tuần (tỷ lệ lấp đầy lịch sử thường dưới 20%).
+Chính sách Giá cố định hiện tại:
+Áp dụng bảng giá cứng theo khung giờ cố định, không thay đổi theo mùa, thời tiết hay nhu cầu thị trường thời gian thực.
+Nguyện vọng về Định giá Linh hoạt:
+Chủ sân mong muốn tự thiết lập Giá sàn (Floor Price) để đảm bảo chi phí điện/vận hành và Giá trần (Ceiling Price) để không bị khách hàng phản ứng tiêu cực.
+Thu thập các biến số chủ sân muốn căn cứ để điều chỉnh giá: Tỷ lệ lấp đầy thời gian thực, thời tiết (mưa/nắng), ngày lễ/Tết, và khoảng thời gian đặt trước (đặt trước 1 tiếng vs đặt trước 3 ngày).
+1.2.3. Khảo sát Khách hàng / Người chơi (Phương pháp: Khảo sát diện rộng Quantitative Survey)
+Hành vi & Thói quen đặt sân:
+Phương thức đặt sân phổ biến: Gọi điện trực tiếp cho chủ sân (65%), nhắn tin Zalo/Fanpage (25%), đến sân trực tiếp (10%).
+Kênh thanh toán ưa thích: Chuyển khoản qua QR Code/Banking (80%), tiền mặt (20%).
+Nhu cầu Ghép đội (Matchmaking):
+Tỷ lệ hủy trận do "thiếu cạ"/không đủ người chơi chiếm tới 30% tổng số lần hủy sân.
+85% người chơi lẻ có nhu cầu tìm đối thủ/đồng đội ngang trình độ, ở gần bán kính 5km và trùng khung giờ rảnh.
+Rào cản trải nghiệm: Khách hàng phàn nàn nhiều nhất về việc phải chờ phản hồi Zalo quá lâu để biết sân còn trống hay không, và thủ tục xác nhận chuyển cọc rườm rà.
+1.2.4. Khảo sát Hạ tầng Kỹ thuật tại Cụm sân (Phương pháp: Site Visit & Technical Inspection)
+Hiện trạng phần cứng có sẵn:
+Hệ thống Camera: Phần lớn các sân đã trang bị Camera IP giám sát, hỗ trợ luồng dữ liệu chuẩn RTSP/ONVIF.
+Hệ thống Điện & Chiếu sáng: Sử dụng tủ điện tập trung với các Aptomat/Contactor cơ điều khiển tay cho từng sân.
+Khả năng tích hợp kỹ thuật:
+Đánh giá vị trí tủ điện: Có không gian để đấu nối thêm thiết bị Rơ-le thông minh (Smart Relay).
+Đánh giá kết nối Mạng: Hạ tầng Wi-Fi tại sân cần bổ sung thiết bị kích sóng hoặc đường truyền riêng cho thiết bị IoT để tránh mất kết nối.
+PHẦN 2: PHÂN TÍCH YÊU CẦU NGHIỆP VỤ VÀ HIỆN TRẠNG (REQUIREMENT ANALYSIS & AS-IS)
+MỤC TIÊU PHẠM VI PHÂN TÍCH
+Phần này tập trung hoàn toàn vào việc Phân tích Yêu cầu Nghiệp vụ (Requirement Analysis) dựa trên dữ liệu đã thu thập ở Phần 1: mổ xẻ quy trình vận hành hiện tại (As-Is Process), phân tích nguyên nhân gốc rễ của các điểm nghẽn và tổng hợp hệ thống yêu cầu bài toán. Nội dung hoàn toàn phục vụ mục đích làm rõ bài toán, tuyệt đối chưa đi vào thiết kế quy trình mới (To-Be), giao diện hay giải pháp kỹ thuật.
+2.1. PHÂN TÍCH QUY TRÌNH VẬN HÀNH HIỆN TẠI (AS-IS PROCESS ANALYSIS)
+2.1.1. Luồng Đặt sân & Thu cọc thủ công hiện tại (As-Is Booking Flow)
+Tiếp nhận nhu cầu: Khách hàng liên hệ qua Điện thoại/Zalo/Fanpage -> Quản lý kiểm tra sổ tay/Excel để tra cứu lịch trống.
+Xác nhận giữ chỗ: Quản lý gửi số tài khoản cá nhân -> Khách hàng chuyển khoản 30-50% tiền cọc -> Khách hàng chụp hình bill gửi qua Zalo.
+Đối soát & Ghi nhận: Quản lý kiểm tra biến động số dư trên App ngân hàng -> Mở sổ tay/Excel để điền tên khách hàng vào khung giờ tương ứng.
+Điểm yếu & Rủi ro phân tích được:
+Trùng lịch (Overbooking): Khi 2 nhân viên cùng trực ca và nhận lịch chốt cùng 1 sân cho 2 khách hàng qua 2 kênh khác nhau (Zalo và Gọi điện).
+Độ trễ cao: Khách hàng mất trung bình 5-15 phút chờ phản hồi đối soát cọc, dễ dẫn đến việc khách chuyển sang đặt sân khác.
+Tỷ lệ hủy muộn (No-show): Mức cọc định mức không đủ bù đắp chi phí cơ hội khi khách hủy sát giờ, khung giờ đó trở thành giờ chết.
+[Hình minh họa: Sơ đồ luồng công việc hiện tại (As-Is Process Flowchart) - Luồng Đặt sân và Đối soát cọc thủ công]
+2.1.2. Luồng Khai thác Giá cố định & Vận hành Khung giờ
+Định giá: Chủ sân ban hành một bảng giá áp dụng cứng cho toàn bộ các ngày trong năm (chia 2 mốc: Giờ thường và Giờ vàng).
+Khai thác:
+Giờ cao điểm (17:00 - 21:00): Luôn trong tình trạng cháy sân, phải từ chối nhiều khách.
+Giờ thấp điểm (08:00 - 16:00): Sân bỏ trống hàng loạt do mức giá cố định vẫn quá cao so với nhu cầu của đối tượng sinh viên/người làm tự do.
+Điểm yếu & Rủi ro phân tích được:
+Lãng phí tài nguyên sân: Tỷ lệ lấp đầy giờ thấp điểm chỉ đạt 15%-20%.
+Thiếu tính linh hoạt: Không thể tự điều chỉnh giảm giá để thu hút khách vào các ngày thời tiết xấu (mưa nhỏ), hoặc tăng giá thu thêm lợi nhuận vào các ngày lễ/sự kiện đặc biệt.
+2.1.3. Luồng Kiểm soát Thiết bị Điện & Dịch vụ Phụ trợ
+Kiểm soát đèn chiếu sáng: Nhân viên trực ca nhìn đồng hồ -> Đi ra tủ điện dập Aptomat bằng tay để bật/tắt đèn cho khách.
+Bán hàng & Dịch vụ: Nhân viên ghi nhận tiền nước, thuê vợt, giày vào một cuốn sổ riêng -> Thu tiền mặt trực tiếp từ khách khi hết giờ.
+Điểm yếu & Rủi ro phân tích được:
+Gian lận tiền giờ ("Bán sân chui"): Nhân viên cho khách vãng lai vào đá chui giờ trống hoặc đá quá giờ 20-30 phút rồi thu tiền mặt riêng mà không ghi sổ.
+Thất thoát điện năng: Nhân viên bật đèn sớm hoặc quên tắt đèn sau khi khách đã rời sân.
+Sai lệch kho hàng: Không kiểm soát được số lượng nước uống/vật dụng thực tế xuất kho so với số tiền nhân viên nộp lại cuối ngày.
+2.2. BẢNG PHÂN TÍCH NGUYÊN NHÂN GỐC RỄ (ROOT CAUSE ANALYSIS)
+2.3. HỆ THỐNG PHÂN LOẠI YÊU CẦU BÀI TOÁN (REQUIREMENTS CLASSIFICATION)
+2.3.1. Yêu cầu Kinh doanh (Business Requirements - BR)
+BR-01: Triệt tiêu hoàn toàn rủi ro trùng lịch (Overbooking) trên toàn hệ thống cụm sân.
+BR-02: Giảm tỷ lệ thất thoát doanh thu tiền giờ và dịch vụ xuống mức dưới 1%.
+BR-03: Tăng tỷ lệ lấp đầy sân vào các khung giờ thấp điểm (08:00 - 16:00 ngày tuần) thêm tối thiểu 25%.
+BR-04: Tự động hóa 100% quy trình xác nhận tiền cọc và cấp vé để giảm 50% tải công việc trực ca thủ công.
+2.3.2. Yêu cầu Người dùng (User Requirements - UR)
+UR-01 (Chủ sân / Quản lý): Muốn theo dõi được báo cáo doanh thu real-time, lịch đặt sân và trạng thái thiết bị điện của từng sân từ xa qua điện thoại.
+UR-02 (Khách hàng / Người chơi): Muốn nhìn thấy lịch trống chính xác theo thời gian thực, chuyển cọc nhận vé ngay lập tức mà không phải chờ nhân viên phản hồi.
+UR-03 (Người chơi lẻ): Muốn có công cụ tìm kiếm đối thủ hoặc ghép đội có trình độ tương đương (Elo), vị trí địa lý gần (<5km) và phù hợp khung giờ rảnh.
+2.3.3. Ràng buộc Kỹ thuật & Vận hành (System Constraints)
+CON-01: Hệ thống phân tích hình ảnh bắt buộc phải tận dụng lại được hệ thống IP Camera hiện có tại cụm sân (chuẩn RTSP/ONVIF), không ép chủ sân thay mới toàn bộ phần cứng.
+CON-02: Hệ thống điều khiển thiết bị điện phải có công tắc cơ dự phòng (Bypass) để đảm bảo sân vẫn bật được đèn thủ công nếu gặp sự cố mất mạng Internet.
+[Hình minh họa: Ma trận phân loại yêu cầu nghiệp vụ và mối tương quan giữa Nỗi đau - Yêu cầu bài toán]
+CHƯƠNG 3: ĐẶC TẢ YÊU CẦU PHẦN MỀM VÀ THIẾT KẾ USE CASE HỆ THỐNG
+3.1. TỔNG QUAN KIẾN TRÚC TƯƠNG TÁC AI CHATBOT VÀ LUỒNG DỮ LIỆU (DATA FLOW)
+Trong hệ thống này, thành phần Trợ lý AI Hỏi Đáp đóng vai trò là một dịch vụ thông minh (AI Microservice / Module) tích hợp trực tiếp trên giao diện Web App. AI không sử dụng xử lý hình ảnh/IoT mà vận hành dựa trên cơ chế Hỏi - Đáp văn bản tích hợp truy vấn dữ liệu nội bộ (RAG - Retrieval-Augmented Generation).
+Luồng xử lý dữ liệu (Data Flow) khi người dùng/quản trị viên tương tác với AI:
+Tiếp nhận Yêu cầu (Frontend Web UI): Người dùng nhập câu hỏi (văn bản) tại khung Chatbot trên Web (ví dụ: "Tư vấn cho tôi sân bóng rổ trống chiều nay dưới 200k" hoặc "Tháng này sân nào có doanh thu cao nhất?").
+Định tuyến & Xác thực (API Gateway / Backend): Web API nhận request, xác thực quyền hạn (Khách hàng hay Admin/Chủ sân) và chuyển câu hỏi sang AI Integration Module.
+Truy vấn Dữ liệu Nội bộ (Database Querying / Context Retrieval):
+Hệ thống tiến hành trích xuất dữ liệu thực tế từ Cơ sở dữ liệu quan hệ (PostgreSQL/MySQL) thông qua các truy vấn ORM/SQL hoặc Vector Database (chứa chính sách, quy định).
+Ví dụ: Tra cứu bảng SanThua, LichDat, BangGia để lấy trạng thái sân trống và giá tiền thực tế.
+Tổng hợp Context & Gọi AI Engine (Prompt Engineering & LLM API):
+Backend đóng gói câu hỏi của người dùng kèm theo Context (Dữ liệu vừa truy xuất từ Database) thành một Prompt chuẩn bị sẵn.
+Gửi Prompt đến AI Model (OpenAI GPT / Claude / Gemini API).
+Sinh Phản hồi & Trả kết quả (Response Generation):
+AI Engine xử lý, sinh câu trả lời bằng ngôn ngữ tự nhiên dựa trên đúng dữ liệu nội bộ được cung cấp.
+API nhận kết quả, định dạng JSON và truyền về giao diện Web hiển thị cho người dùng dưới dạng văn bản trực quan.
+3.2. BIỂU ĐỒ USE CASE TỔNG QUÁT (GENERAL USE CASE DIAGRAM)
+Hình 3.1: Sơ đồ tổng quan Use Case hệ thống quản lý sân thể thao tích hợp AI
+3.3. BIỂU ĐỒ USE CASE PHÂN RÃ (DECOMPOSED USE CASE DIAGRAMS)
+3.3.1. Phân rã Gói chức năng: Trợ lý AI Hỏi Đáp Khách hàng (Customer AI Module)
+Mô tả chi tiết các kịch bản tương tác văn bản của Khách hàng với AI Trợ lý trên giao diện Web.
+Hình 3.2: Biểu đồ Use Case phân rã gói chức năng Trợ lý AI Hỏi Đáp dành cho Khách hàng
+3.3.2. Phân rã Gói chức năng: Quản trị & Báo cáo Thông minh AI (Admin AI Analytics Module)
+Mô tả chi tiết các tác vụ của Chủ sân khi sử dụng AI để truy xuất dữ liệu kinh doanh và đề xuất chương trình khuyến mãi.
+Hình 3.3: Biểu đồ Use Case phân rã gói chức năng Quản trị & Báo cáo Thông minh AI
+3.3.3. Phân rã Gói chức năng: Đặt sân & Thanh toán trực tuyến (Core Booking Module)
+Mô tả luồng nghiệp vụ cốt lõi từ lúc tra cứu sơ đồ sân đến khi hoàn tất thanh toán.
+Hình 3.4: Biểu đồ Use Case phân rã gói chức năng Đặt sân và Dịch vụ trực tuyến
+3.4. ĐẶC TẢ CHI TIẾT CÁC USE CASE TƯƠNG TÁC AI TRỌNG TÂM
+3.4.1. Đặc tả Use Case UC05.1 & UC05.2: Trợ lý AI Tra cứu Sân trống & Tư vấn Khung giờ theo Ngân sách
+Tên Use Case: Tra cứu sân trống và tư vấn khung giờ theo ngân sách qua AI.
+Mã Use Case: UC05.1_2
+Mô tả: Cho phép khách hàng nhắn tin với Chatbot AI trên Web để tìm sân phù hợp với nhu cầu, thời gian rảnh và khả năng tài chính mà không cần tự duyệt qua danh sách thủ công.
+Tác nhân (Actor): Khách hàng (User), Dịch vụ AI Chatbot, Cơ sở dữ liệu (Database).
+Tiền điều kiện (Pre-condition): Khách hàng đang truy cập trang web; hệ thống bảng giá, khung giờ và trạng thái sân trong CSDL đang ở trạng thái sẵn sàng.
+Dòng sự kiện chính (Main Flow):
+Dòng sự kiện ngoại lệ (Alternative Flows):
+3a. Không tìm thấy thông tin phù hợp trong DB: AI sẽ phản hồi: "Rất tiếc, khung giờ 16h-18h chiều nay các sân giá dưới 150k đã kín. Tuy nhiên, khung giờ 14h-15h30 còn Sân B2 giá 120k, hoặc sau 20h còn Sân A1. Bạn có muốn tham khảo không?"
+5a. Lỗi kết nối AI Engine: Hệ thống tự động chuyển sang luồng trả lời dự phòng dựa trên template cố định: hiển thị bảng danh sách sân trống dạng Grid tiêu chuẩn.
+3.4.2. Đặc tả Use Case UC07.1: Xuất Báo cáo Doanh thu & Phân tích Kinh doanh Nhanh qua AI
+Tên Use Case: Xuất Báo cáo Doanh thu & Phân tích Kinh doanh qua AI.
+Mã Use Case: UC07.1
+Mô tả: Cho phép Chủ sân/Quản lý gõ câu hỏi bằng ngôn ngữ tự nhiên để truy xuất báo cáo doanh thu, so sánh hiệu quả kinh doanh giữa các sân mà không cần thao tác kết xuất file Excel phức tạp.
+Tác nhân (Actor): Chủ sân/Quản lý (Admin), Dịch vụ AI Chatbot, Cơ sở dữ liệu (Database).
+Tiền điều kiện (Pre-condition): Admin đã đăng nhập thành công với tài khoản có quyền Quản trị.
+Dòng sự kiện chính (Main Flow):
+Dòng sự kiện ngoại lệ (Alternative Flows):
+2a. Yêu cầu báo cáo vượt quá dữ liệu hiện có: AI phản hồi rõ ràng: "Hệ thống chỉ lưu trữ dữ liệu chi tiết trong vòng 2 năm gần nhất. Bạn đang truy vấn dữ liệu năm 2022, vui lòng chọn lại khoảng thời gian."
+3.4.3. Đặc tả Use Case UC08.1: Đề xuất Chương trình Khuyến mãi Khung giờ Thấp điểm (Off-peak AI Suggestion)
+Tên Use Case: Gợi ý Chương trình Khuyến mãi Khung giờ Thấp điểm qua AI.
+Mã Use Case: UC08.1
+Mô tả: AI tự động phân tích tỷ lệ lấp đầy các khung giờ vắng khách (08:00 - 15:00 ngày tuần) và gợi ý chiến dịch giảm giá/combo phù hợp để tối ưu doanh thu cho Chủ sân.
+Tác nhân (Actor): Chủ sân/Quản lý (Admin), Dịch vụ AI Engine, Cơ sở dữ liệu (Database).
+Dòng sự kiện chính (Main Flow):
+3.5. BẢNG MÔ TẢ ĐƠN VỊ THỰC THỂ CƠ BẢN PHỤC VỤ TRUY VẤN AI (DATA CONTEXT DÙNG CHO AI)
+Để AI có thể trả lời chính xác, các bảng CSDL sau đây là đầu vào dữ liệu bắt buộc (RAG Context) cho hệ thống:
+3.6. THIẾT KẾ SƠ ĐỒ TUẦN TỰ (SEQUENCE DIAGRAM DESIGN)
+3.6.1. Sơ đồ tuần tự: Khách hàng hỏi đáp AI để tra cứu sân trống và chính sách (UC-AI-01)
+Sơ đồ mô tả chi tiết luồng truyền tin từng bước từ Giao diện Web Khách hàng (Web Client Interface), qua Backend API Gateway, truy vấn Cơ sở dữ liệu (Database) để lấy dữ liệu thời gian thực (Real-time data), chuyển đến Lớp tích hợp AI (AI Integration Layer) để xử lý ngôn ngữ tự nhiên và trả kết quả hiển thị cho Khách hàng.
+[Hình minh họa: Sơ đồ tuần tự Khách hàng hỏi đáp AI]
+3.6.2. Sơ đồ tuần tự: Chủ sân (Admin) trích xuất báo cáo & phân tích phản hồi qua AI (UC-AI-02)
+Sơ đồ mô tả luồng tương tác khi Admin sử dụng Trợ lý AI để truy vấn nhanh số liệu kinh doanh và phân tích đánh giá của khách hàng mà không cần xuất file Excel thủ công.
+[Hình minh họa: Sơ đồ tuần tự Chủ sân trích xuất báo cáo]
+3.7. SƠ ĐỒ HOẠT ĐỘNG (ACTIVITY DIAGRAM DESIGN)
+3.7.1. Sơ đồ hoạt động luồng xử lý câu hỏi Chatbot AI tổng quát
+Biểu đồ mô tả chi tiết tiến trình logic xử lý luồng dữ liệu từ khi hệ thống tiếp nhận câu hỏi của người dùng, phân loại yêu cầu, truy vấn dữ liệu nội bộ đến khi trả lời hoặc chuyển hướng xử lý ngoại lệ.
+[Hình minh họa: Sơ đồ hoạt động luồng xử lý câu hỏi Chatbot AI]
+3.8. BIỂU ĐỒ LỚP PHÂN TÍCH (ANALYSIS CLASS DIAGRAM)
+Biểu đồ lớp phân tích thể hiện cấu trúc tĩnh của hệ thống theo mô hình Boundary - Control - Entity (BCE) kết hợp với khối dịch vụ AI Integration Service.
+[Hình minh họa: Biểu đồ lớp phân tích BCE]
+CHƯƠNG 4: THIẾT KẾ CƠ SỞ DỮ LIỆU VÀ GIAO DIỆN HỎI ĐÁP AI
+4.1. CƠ SỞ DỮ LIỆU TÍCH HỢP CHO AI HOẠT ĐỘNG
+Dưới đây là mô hình sơ đồ quan hệ thực thể (ERD) rút gọn tập trung vào các bảng dữ liệu cốt lõi mà Trợ lý AI truy xuất để phục vụ tính năng Hỏi Đáp cho Khách hàng và Chủ sân:
+Bảng tổng hợp vai trò dữ liệu phục vụ AI Chatbot:
+4.2. MÔ TẢ TÍNH NĂNG & THIẾT KẾ GIAO DIỆN DEMO CỬA SỔ HỎI ĐÁP AI
+4.2.1. Giao diện Chatbot Trợ lý ảo phía Khách hàng (User Web Interface)
+Vị trí hiển thị: Widget hình tròn cố định ở góc dưới bên phải màn hình trang web (Bottom-Right Floating Widget). Khi nhấn vào, cửa sổ Chatbot trượt mở mượt mà.
+Thành phần giao diện chính:
+Header Chatbot: Hiển thị Avatar Trợ lý AI, tên "Trợ Lý Sân Thể Thao 24/7" và đèn báo trạng thái "Đang hoạt động (Online)".
+Khung lịch sử trò chuyện (Chat Body):
+Tin nhắn chào mừng tự động chứa các câu hỏi gợi ý nhanh (Quick Suggestions) như: "Sân chiều nay còn trống không?", "Chính sách hủy sân thế nào?", "Tư vấn thuê HLV".
+Bong bóng tin nhắn của Người dùng (màu xanh, căn phải) và Tin nhắn của AI (màu xám nhạt, căn trái).
+Khung nhập liệu (Input Bar):
+Ô nhập câu hỏi văn bản (Text field).
+Nút gửi (Send Button) và biểu tượng Micro (nếu hỗ trợ giọng nói).
+Thao tác tích hợp (Contextual Actions): Nếu AI trả lời còn sân trống, giao diện sẽ hiển thị kèm một thẻ thông tin sân (Court Card) có nút bấm "Đặt ngay" chuyển thẳng sang giao diện chọn giờ thanh toán.
+4.2.2. Giao diện Trợ lý Phân tích AI phía Chủ sân (Admin Dashboard)
+Vị trí hiển thị: Một thanh tìm kiếm / tương tác AI thông minh (AI Command Bar) đặt tại vị trí trung tâm phía trên cùng của trang Admin Dashboard.
+Thành phần giao diện chính:
+Thanh truy vấn thông minh: Cho phép Admin nhập lệnh bằng ngôn ngữ tự nhiên (Ví dụ: "Doanh thu tuần này so với tuần trước thế nào?", "Gợi ý khuyến mãi cho khung giờ 8h-14h").
+Cửa sổ kết quả phân tích (AI Insight Modal):
+Khối Tóm tắt (Summary Block): Hiển thị câu trả lời dạng văn bản tích hợp thông số đã được AI tổng hợp.
+Khối Biểu đồ tĩnh / Dữ liệu: Xuất trực tiếp biểu đồ cột/tròn nhỏ nếu truy vấn liên quan đến so sánh doanh thu.
+Khối Gợi ý đề xuất (Actionable Insights): AI hiển thị các đề xuất tự động (Ví dụ: "Giảm 20% giá sân 7 người vào khung giờ 9:00 - 11:00 Thứ Bảy để cải thiện tỷ lệ lấp đầy"). Nút bấm "Áp dụng khuyến mãi này ngay" hỗ trợ Admin kích hoạt chính sách chỉ với một cú nhấp chuột.

@@ -1,0 +1,413 @@
+SDLC HIỆN ĐẠI
+Trong SDLC hiện đại có AI/Agent, ngoài việc quản lý source code, test, tài liệu…, các công ty bắt đầu phải quản lý thêm Prompt, Skill và cấu hình của Agent như những tài sản kỹ thuật của dự án.
+Điểm quan trọng là Prompt và Skill không nên được lưu rải rác trong chat hoặc trong đầu của developer. Chúng nên được quản lý giống như code và tài liệu: có cấu trúc, version, kiểm thử và review.
+1. SDLC hiện đại có thêm một "AI layer"
+Có thể hình dung:
+                 MODERN SDLC
+                      │
+       ┌──────────────┴──────────────┐
+       │                             │
+ Traditional Software           AI Engineering
+       │                             │
+ Requirements                    Prompt
+ Design                          Skill
+ Coding                          Agent
+ Testing                         Context
+ Deployment                      Evaluation
+       │                             │
+       └──────────────┬──────────────┘
+                      ↓
+                Production
+Ví dụ với hệ thống bán laptop mà chúng ta vừa xây dựng:
+Requirement Agent
+       │
+       ├── requirement_skill
+       └── requirement_prompt
+                ↓
+Design Agent
+       │
+       ├── design_skill
+       └── design_prompt
+                ↓
+Coding Agent
+       │
+       ├── coding_skill
+       └── coding_prompt
+                ↓
+Testing Agent
+       │
+       ├── testing_skill
+       └── testing_prompt
+                ↓
+Critic Agent
+       │
+       ├── critic_skill
+       └── critic_prompt
+                ↓
+Deployment Agent
+       │
+       ├── deployment_skill
+       └── deployment_prompt
+2. Prompt và Skill khác nhau như thế nào?
+Đây là điểm rất quan trọng.
+Prompt
+Prompt = chỉ dẫn cụ thể cho một lần thực hiện nhiệm vụ.
+Ví dụ:
+Bạn là Requirement Agent.
+Hãy phân tích tài liệu yêu cầu và tạo:
+1. requirements.md
+2. usecase.puml
+3. user_stories.md
+Không được tự bổ sung yêu cầu chưa được xác nhận.
+...
+Prompt trả lời câu hỏi:
+Agent phải làm gì trong lần này?
+Skill
+Skill = năng lực/quy trình có thể tái sử dụng của Agent.
+Ví dụ:
+Requirement Analysis Skill
+có thể quy định:
+1. Đọc requirement
+2. Xác định actor
+3. Xác định functional requirements
+4. Xác định non-functional requirements
+5. Xác định business rules
+6. Xác định ambiguity
+7. Sinh use case
+8. Sinh user stories
+9. Kiểm tra consistency
+Skill trả lời câu hỏi:
+Agent biết cách thực hiện nhiệm vụ như thế nào?
+Có thể hiểu đơn giản:
+Prompt = nhiệm vụ
+Skill  = năng lực + quy trình thực hiện
+3. Trong dự án nên tổ chức như thế nào?
+Tôi đề xuất một cấu trúc như sau:
+project/
+│
+├── agents/
+│   │
+│   ├── requirement/
+│   │   ├── prompt.md
+│   │   ├── skill.md
+│   │   └── config.yaml
+│   │
+│   ├── design/
+│   │   ├── prompt.md
+│   │   ├── skill.md
+│   │   └── config.yaml
+│   │
+│   ├── coding/
+│   │   ├── prompt.md
+│   │   ├── skill.md
+│   │   └── config.yaml
+│   │
+│   ├── testing/
+│   │   ├── prompt.md
+│   │   ├── skill.md
+│   │   └── config.yaml
+│   │
+│   ├── critic/
+│   │   ├── prompt.md
+│   │   ├── skill.md
+│   │   └── config.yaml
+│   │
+│   └── deployment/
+│       ├── prompt.md
+│       ├── skill.md
+│       └── config.yaml
+│
+├── requirements/
+├── design/
+├── src/
+├── tests/
+├── deployment/
+│
+└── evaluations/
+Đây là cách tiếp cận khá tốt cho AI-Augmented SDLC.
+4. Ví dụ cụ thể: Requirement Agent
+Ta có:
+agents/
+└── requirement/
+    ├── prompt.md
+    ├── skill.md
+    └── config.yaml
+skill.md
+Skill có thể mô tả:
+# Requirement Analysis Skill
+## Purpose
+Phân tích tài liệu yêu cầu phần mềm và tạo đặc tả có cấu trúc.
+## Input
+- requirement document
+- business description
+- stakeholder information
+## Process
+1. Identify actors.
+2. Identify functional requirements.
+3. Identify non-functional requirements.
+4. Identify business rules.
+5. Identify ambiguities.
+6. Create use cases.
+7. Create user stories.
+8. Create acceptance criteria.
+9. Perform consistency checking.
+## Output
+- requirements.md
+- usecase.puml
+- user_stories.md
+## Constraints
+- Không tự tạo yêu cầu chưa được xác nhận.
+- Không thay đổi business rule.
+- Mọi requirement phải có ID.
+- User Story phải có Acceptance Criteria.
+Skill này có thể được dùng lại cho hàng chục dự án.
+5. Còn prompt.md?
+Prompt có thể cụ thể hóa nhiệm vụ hiện tại:
+# Requirement Agent Prompt
+You are the Requirement Agent.
+Your task is to analyze the provided software
+requirements and produce three artifacts:
+1. requirements.md
+2. usecase.puml
+3. user_stories.md
+Follow the Requirement Analysis Skill.
+Rules:
+- Do not invent unspecified requirements.
+- Mark ambiguous requirements explicitly.
+- Every functional requirement must have an ID.
+- Every user story must contain acceptance criteria.
+- Use PlantUML syntax for the use case diagram.
+Before finishing, verify consistency among:
+requirements.md
+usecase.puml
+user_stories.md
+Như vậy:
+Skill
+  ↓
+Quy định năng lực/phương pháp
+Prompt
+  ↓
+Giao nhiệm vụ cụ thể
+6. Có cần quản lý Version không?
+Có, và đây là vấn đề rất quan trọng.
+Ví dụ:
+Requirement Agent
+Prompt v1.0
+Skill v1.0
+Sau khi phát hiện Agent thường xuyên tạo Use Case sai:
+Prompt v1.1
+Skill v1.1
+Sau đó đánh giá lại.
+Có thể dùng Git:
+git log
+v1.0  Initial requirement skill
+v1.1  Add ambiguity detection
+v1.2  Add traceability validation
+v1.3  Improve use-case generation
+Do đó:
+Prompt và Skill nên được version control giống như source code.
+7. Không chỉ version Prompt — phải version cả Model
+Ví dụ:
+Agent Configuration
+Agent:
+Requirement Agent
+Model:
+gemini-2.5-flash
+Prompt:
+v1.3
+Skill:
+v1.2
+Temperature:
+0.2
+Tools:
+- file_reader
+- plantuml_generator
+Sau này đổi model:
+gemini-2.5-flash
+       ↓
+gemini-3.x
+có thể làm output thay đổi.
+Vì vậy cần ghi lại:
+Model version
+Prompt version
+Skill version
+Tool version
+Input version
+Output
+Evaluation result
+Đây chính là bước tiến từ Software Engineering sang AI Engineering.
+8. Cần có Prompt Evaluation
+Đây là phần rất quan trọng mà sinh viên thường bỏ qua.
+Không nên đánh giá:
+"Prompt này có vẻ tốt."
+Mà phải có bộ test.
+Ví dụ:
+evaluations/
+└── requirement_agent/
+    ├── test_001.json
+    ├── test_002.json
+    ├── test_003.json
+    └── evaluation_report.md
+Một test:
+Input:
+"Tôi cần website bán laptop..."
+Expected:
+- Customer actor
+- Admin actor
+- Product management
+- Order management
+Chạy Agent:
+Actual:
+- Customer actor
+- Admin actor
+- Product management
+- Order management
+- Payment
+Nhưng Payment chưa được yêu cầu.
+Kết quả:
+FAIL
+Reason:
+Agent hallucinated an unspecified requirement.
+9. Đây chính là vai trò của Critic Agent
+Ta có thể đưa Prompt/Skill vào vòng kiểm soát:
+Requirement Agent
+       ↓
+requirements.md
+usecase.puml
+user_stories.md
+       ↓
+Critic Agent
+       ↓
+ ┌─────┴──────┐
+ │            │
+APPROVE      REJECT
+ │            │
+ ↓            ↓
+Design     Requirement
+Agent        Agent
+              │
+              ↓
+          Retry
+Critic có thể kiểm tra:
+Requirement Coverage
+Use Case Consistency
+User Story Consistency
+Missing Requirement
+Hallucination
+Format Compliance
+Traceability
+10. Một bước cao hơn: Skill Registry
+Khi công ty có nhiều Agent, sẽ không nên để mỗi Agent tự có một bộ Skill riêng biệt.
+Có thể có:
+skills/
+│
+├── requirement-analysis/
+│   └── skill.md
+│
+├── uml-generation/
+│   └── skill.md
+│
+├── api-design/
+│   └── skill.md
+│
+├── python-coding/
+│   └── skill.md
+│
+├── test-generation/
+│   └── skill.md
+│
+├── code-review/
+│   └── skill.md
+│
+└── security-review/
+    └── skill.md
+Agent lấy Skill cần thiết:
+Requirement Agent
+    ├── requirement-analysis
+    └── uml-generation
+Design Agent
+    ├── api-design
+    └── uml-generation
+Coding Agent
+    └── python-coding
+Testing Agent
+    └── test-generation
+Critic Agent
+    ├── code-review
+    └── security-review
+Điều này rất gần với cách chúng ta đang nói về Skills trong hệ thống Agent hiện đại.
+11. Toàn bộ SDLC lúc này trở thành
+                    PRODUCT OWNER
+                          │
+                          ▼
+                  REQUIREMENT AGENT
+                    │           │
+              Prompt v1.3   Skill v1.2
+                    │           │
+                    ▼           ▼
+              requirements.md
+              usecase.puml
+              user_stories.md
+                    │
+                    ▼
+                   CRITIC
+                    │
+              APPROVE / REJECT
+                    │
+                    ▼
+                 DESIGN
+                    │
+              Prompt + Skill
+                    │
+                    ▼
+                 CODING
+                    │
+              Prompt + Skill
+                    │
+                    ▼
+                 TESTING
+                    │
+              Prompt + Skill
+                    │
+                    ▼
+                  CRITIC
+                    │
+             APPROVE / REJECT
+                    │
+                    ▼
+                DEPLOYMENT
+Và Git quản lý toàn bộ:
+Source Code
+Requirements
+Prompts
+Skills
+Agent Config
+Tests
+Evaluation
+Architecture
+UML
+12. Có thể gọi đây là "AI-Augmented SDLC"
+Một mô hình khái quát rất dễ dùng trong bài giảng là:
+                 ┌────────────────────────┐
+                 │       SDLC             │
+                 └───────────┬────────────┘
+                             │
+            ┌────────────────┴────────────────┐
+            │                                 │
+     Software Artifacts                 AI Artifacts
+            │                                 │
+     ┌──────┼──────┐                ┌─────────┼─────────┐
+     │      │      │                │         │         │
+ Requirements Code  Tests         Prompt    Skill     Agent
+     │      │      │                │         │         │
+     └──────┼──────┘                └─────────┼─────────┘
+            │                                 │
+            └────────────────┬────────────────┘
+                             ↓
+                     Version Control
+                             ↓
+                         Evaluation
+                             ↓
+                     Human Review
+Trong SDLC hiện đại có AI, Prompt và Skill không còn chỉ là "câu lệnh để hỏi AI". Khi AI tham gia trực tiếp vào phát triển phần mềm, chúng trở thành artifact của quá trình kỹ nghệ phần mềm, cần được chuẩn hóa → version hóa → kiểm thử → đánh giá → review → triển khai giống như các artifact khác.
+Artifact trong kỹ thuật phần mềm có thể hiểu đơn giản là: Một sản phẩm/tài liệu được tạo ra trong quá trình phát triển phần mềm và được lưu lại để sử dụng, kiểm tra, trao đổi hoặc làm đầu vào cho bước tiếp theo.

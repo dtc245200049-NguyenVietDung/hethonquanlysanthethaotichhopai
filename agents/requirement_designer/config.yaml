@@ -1,0 +1,11 @@
+Agent: Requirement Designer Agent
+Model: gemini-3.1-pro
+Version: 1.0
+Role: Systems Analyst & Technical Architect
+Prompt_Version: 1.0
+Skill_Version: 1.0
+Temperature: 0.1
+Tools:
+  - plantuml_generator
+  - markdown_editor
+  - document_analyzer
