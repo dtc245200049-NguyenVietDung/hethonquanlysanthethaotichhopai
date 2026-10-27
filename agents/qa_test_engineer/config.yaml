@@ -1,0 +1,5 @@
+name: qa_test_engineer
+role: QA & Software Testing Engineer
+description: "Chuyên trách thiết kế bộ Test Cases, kiểm thử chức năng và báo cáo chất lượng hệ thống"
+model: gemini-1.5-flash
+temperature: 0.1

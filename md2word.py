@@ -60,7 +60,11 @@ def create_docx(md_file, docx_file):
             doc.add_paragraph(clean_line)
 
     doc.save(docx_file)
-    print(f"Đã tạo thành công {docx_file}")
+    print(f"Successfully created: {docx_file}")
 
 if __name__ == '__main__':
-    create_docx('TAI_LIEU_THIET_KE_V2.md', 'TAI_LIEU_THIET_KE_V2.docx')
+    import sys
+    if len(sys.argv) == 3:
+        create_docx(sys.argv[1], sys.argv[2])
+    else:
+        print("Usage: python md2word.py <input.md> <output.docx>")
