@@ -1,0 +1,42 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sportai_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-1.5-flash}
+      - JWT_SECRET=${JWT_SECRET:-sportai_jwt_super_secret_key_2026_secure}
+    volumes:
+      - ./backend/database.db:/app/database.db
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/courts').then(r => process.exit(r.ok ? 0 : 1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sportai_network
+
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    container_name: sportai_webapp
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - sportai_network
+
+networks:
+  sportai_network:
+    driver: bridge

@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Terminal, X, Send, Database, ShieldAlert, Sparkles, Activity } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Terminal, X, Send, Database, ShieldAlert, Activity, Download } from 'lucide-react';
 
 export default function AiCommandBar({ onRefresh }: { onRefresh?: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,6 +11,28 @@ export default function AiCommandBar({ onRefresh }: { onRefresh?: () => void }) 
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const autoSimulateRef = useRef<any>(null); // Lưu trữ timer giả lập tự động
+
+  const triggerExportCsv = async () => {
+    try {
+      const token = localStorage.getItem('sportai_admin_token');
+      const res = await fetch('http://localhost:3000/api/revenue/export-csv', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (!res.ok) throw new Error('Không thể tải file');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `BaoCaoDoanhThu_SportAI_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return true;
+    } catch (e) {
+      console.error("Auto export error:", e);
+      return false;
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -50,10 +72,14 @@ export default function AiCommandBar({ onRefresh }: { onRefresh?: () => void }) 
         setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: `⏳ Đã kích hoạt Auto-Simulation:\nHệ thống sẽ tự động tạo 1 đơn mới mỗi ${seconds} giây. Cứ ngồi xem danh sách tự dài ra nhé!\n*(Gõ "dừng" để tắt kịch bản)*`, isAlert: true }]);
         setIsTyping(false);
 
+        const token = localStorage.getItem('sportai_admin_token');
         autoSimulateRef.current = setInterval(() => {
           fetch('http://localhost:3000/api/admin/ai-execute', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({ query: 'tạo 1 đơn' })
           }).then(() => {
             if (onRefresh) onRefresh();
@@ -76,10 +102,14 @@ export default function AiCommandBar({ onRefresh }: { onRefresh?: () => void }) 
             .then(data => {
               const pending = data.filter((b: any) => b.status === 'pending');
               if (pending.length > 0) {
+                const token = localStorage.getItem('sportai_admin_token');
                 // Duyệt tự động đơn đầu tiên tìm thấy
                 fetch(`http://localhost:3000/api/bookings/${pending[0].id}/status`, {
                   method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                  },
                   body: JSON.stringify({ status: 'confirmed' })
                 }).then(() => {
                   if (onRefresh) onRefresh();
@@ -102,16 +132,35 @@ export default function AiCommandBar({ onRefresh }: { onRefresh?: () => void }) 
         return;
       }
 
-      // 5. Chế độ thao tác Database (Lệnh 1 lần: Xóa sạch, tạo bão đơn)
+      // 5. Chế độ thao tác Database (Lệnh 1 lần: Xóa sạch, tạo bão đơn, xuất báo cáo)
+      const token = localStorage.getItem('sportai_admin_token');
+      const isExportReq = /xuất|tải|export|down|file/i.test(lowerInput);
+      if (isExportReq && (/doanh thu|báo cáo|excel|csv|tiền/i.test(lowerInput) || lowerInput.includes('xuất file'))) {
+        triggerExportCsv();
+      }
+
       fetch('http://localhost:3000/api/admin/ai-execute', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ query: newMsg.text })
       })
       .then(res => res.json())
       .then(data => {
         setIsLoading(false);
-        if (data.message) {
+        if (data.isExport || (data.message && data.message.includes('BÁO CÁO DOANH THU'))) {
+          triggerExportCsv();
+          setMessages(prev => [...prev, { 
+            id: Date.now() + 1, 
+            sender: 'ai', 
+            text: data.message, 
+            isAlert: true,
+            downloadCsv: true 
+          }]);
+          if (onRefresh) onRefresh();
+        } else if (data.message) {
           setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: data.message, isAlert: true }]);
           if (onRefresh) onRefresh();
         } else {
@@ -119,18 +168,49 @@ export default function AiCommandBar({ onRefresh }: { onRefresh?: () => void }) 
         }
       });
     } else {
-      // Chế độ Tư vấn (Consult)
-      setTimeout(() => {
-        setIsLoading(false);
-        const lowerInput = newMsg.text.toLowerCase();
-        let reply = '';
-        if (lowerInput.includes('doanh thu')) {
-          reply = 'Doanh thu tuần này đạt 45.5 triệu VNĐ, tăng trưởng 12%. Có thể xem chi tiết trên bảng điều khiển.';
-        } else {
-          reply = 'Tôi đang ở chế độ tư vấn an toàn. Bật công tắc "Thao tác DB" (màu đỏ) phía trên nếu bạn muốn tôi can thiệp vào cơ sở dữ liệu nhé!';
+      // Chế độ Tư vấn (Consult) - Kết nối dữ liệu thật
+      const token = localStorage.getItem('sportai_admin_token');
+      const lowerInput = newMsg.text.toLowerCase();
+      const isExportReq = /xuất|tải|export|down|file/i.test(lowerInput);
+
+      if (lowerInput.includes('doanh thu') || lowerInput.includes('báo cáo') || lowerInput.includes('tiền') || isExportReq) {
+        if (isExportReq) {
+          triggerExportCsv();
         }
-        setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: reply }]);
-      }, 1000);
+        fetch('http://localhost:3000/api/revenue', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        })
+          .then(res => res.json())
+          .then(data => {
+            setIsLoading(false);
+            const msg = isExportReq
+              ? `📥 **ĐÃ TỰ ĐỘNG XUẤT VÀ TẢI FILE EXCEL VỀ MÁY TÍNH!**\n• Tên tệp tin: \`BaoCaoDoanhThu_SportAI_${new Date().toISOString().split('T')[0]}.csv\`\n• Tổng số đơn đã thu tiền: **${data.totalOrders || 0} hóa đơn**\n• Tổng doanh thu tích lũy: **${data.totalRevenueFormatted || '0 VNĐ'}**\n\n*(File .csv đã được trình duyệt tự động tải xuống thư mục Downloads. Sếp cũng có thể bấm nút bên dưới để tải lại bất cứ lúc nào)*`
+              : `📊 **BÁO CÁO DOANH THU THỰC TẾ (SQLITE):**\n• Tổng số đơn đã thu tiền: **${data.totalOrders || 0} hóa đơn**\n• Tổng doanh thu: **${data.totalRevenueFormatted || '0 VNĐ'}**\n\n*(Sếp có thể bấm nút "Tải File Excel" bên dưới hoặc trên Dashboard để tải file .csv về máy)*`;
+            setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: msg, downloadCsv: true, isAlert: isExportReq }]);
+          })
+          .catch(() => {
+            setIsLoading(false);
+            setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: 'Không thể kết nối API doanh thu lúc này.' }]);
+          });
+      } else {
+        fetch('http://localhost:3000/api/chat', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ message: newMsg.text })
+        })
+          .then(res => res.json())
+          .then(data => {
+            setIsLoading(false);
+            setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: data.text || 'Tôi đã tiếp nhận ý kiến của bạn.' }]);
+          })
+          .catch(() => {
+            setIsLoading(false);
+            setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: 'Tôi đang ở chế độ tư vấn an toàn. Bật công tắc "Thao tác DB" (màu đỏ) nếu bạn muốn tôi can thiệp vào cơ sở dữ liệu nhé!' }]);
+          });
+      }
     }
   };
 
@@ -207,6 +287,29 @@ export default function AiCommandBar({ onRefresh }: { onRefresh?: () => void }) 
                 }}>
                   {msg.isAlert && <ShieldAlert size={16} color="var(--accent)" style={{ marginBottom: '8px' }} />}
                   <div style={{ whiteSpace: 'pre-line' }}>{renderText(msg.text)}</div>
+                  {msg.downloadCsv && (
+                    <button 
+                      onClick={() => triggerExportCsv()} 
+                      className="btn" 
+                      style={{ 
+                        marginTop: '10px', 
+                        padding: '6px 14px', 
+                        fontSize: '0.8rem', 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '6px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        color: '#fff',
+                        border: 'none',
+                        fontWeight: 600,
+                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                      }}
+                    >
+                      <Download size={14} /> Tải Lại File Excel (.csv)
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

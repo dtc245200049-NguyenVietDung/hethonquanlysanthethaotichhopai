@@ -1,0 +1,69 @@
+@startuml
+!theme plain
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam actor {
+    BackgroundColor #EFF6FF
+    BorderColor #1E3A8A
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1E3A8A
+    ArrowColor #1E3A8A
+}
+
+left to right direction
+
+title <size:15><b>GÓI USE CASE: QUẢN TRỊ & BÁO CÁO THÔNG MINH AI (UC07 - UC08)</b></size>\n<size:11><i>Phân tích doanh thu, tỷ lệ lấp đầy, đề xuất khuyến mãi và rào chắn phân quyền RBAC</i></size>
+
+actor "Chủ sân / Quản lý\n(Admin)" as Admin
+actor "Gemini AI Engine\n(Google Generative AI)" as AIEngine <<Secondary>>
+
+rectangle "Gói Chức năng: Quản trị & Báo cáo Thông minh AI (Admin Analytics)" #F8FAFC {
+    usecase "UC07: Báo cáo & Phân tích Hoạt động Kinh doanh\n(Trợ lý Quản trị & Phân tích Doanh thu)" as UC07
+    
+    package "Các Nghiệp vụ Phân tích & Quản trị Thông minh" #FFFFFF {
+        usecase "UC07.1: Tra cứu báo cáo tổng hợp doanh thu" as UC07_1
+        usecase "UC07.2: Phân tích phản hồi & đánh giá khách hàng" as UC07_2
+        usecase "UC08.1: Đề xuất chương trình ưu đãi khung giờ vắng" as UC08_1
+        usecase "UC08.2: Kích hoạt chương trình khuyến mãi tự động" as UC08_2
+    }
+
+    package "Rào chắn An toàn & Phân quyền (Security Guardrail)" #FFFFFF {
+        usecase "UC07.E1: Từ chối truy cập khi sai phân quyền\n(RBAC Security Guardrail: role != 'admin')" as UC07_E1
+    }
+
+    ' Canh chỉnh vị trí
+    UC07 -[hidden]right-> UC07_1
+    UC07 -[hidden]right-> UC07_E1
+}
+
+' Phân quyền Quản trị viên
+Admin -- UC07
+
+' Chuyên biệt hóa các nghiệp vụ báo cáo (Generalization)
+UC07_1 -left-|> UC07
+UC07_2 -left-|> UC07
+UC08_1 -left-|> UC07
+
+' Quan hệ <<extend>>: Hướng mũi tên từ Use Case mở rộng trỏ về Use Case cơ sở
+UC08_2 .left.> UC08_1 : <<extend>>\n(Khi Admin phê duyệt đề xuất)
+UC07_E1 .left.> UC07 : <<extend>>\n(Khi phát hiện vi phạm phân quyền)
+
+' Tương tác với Hệ thống AI Engine (Secondary Actor Association)
+UC07 -- AIEngine : Cung cấp AI Service\n& Function Calling
+
+note right of UC07_E1
+  <b>Ánh xạ Kỹ thuật & Rào chắn (Guardrails):</b>
+  * UC07.1: Tool <i>generate_revenue_report</i> (Kiểm tra RBAC 2 lớp)
+  * Doanh thu thực: INNER JOIN HoaDonDoanhThu & LichDatSan (trangThai = 'confirmed')
+  * UC08.2: Endpoint <i>/api/admin/ai-execute</i> (Kích hoạt Flash Sale 50%)
+  * Chống bịa đặt số liệu tài chính (Zero-Hallucination Policy)
+end note
+
+@enduml

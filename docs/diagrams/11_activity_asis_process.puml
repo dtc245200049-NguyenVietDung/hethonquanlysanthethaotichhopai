@@ -1,0 +1,91 @@
+@startuml
+!theme plain
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #1E3A8A
+    ArrowColor #1E3A8A
+}
+
+title <size:15><b>SƠ ĐỒ QUY TRÌNH HIỆN TRẠNG THỦ CÔNG (AS-IS PROCESS FLOWCHART)</b></size>\n<size:11><i>Phân tích Điểm nghẽn: Trùng lịch (Overbooking), Chờ đối soát cọc và Thiệt hại do Hủy lịch (No-Show)</i></size>
+
+|#F8FAFC|Khách Hàng|
+|#FEFCE8|Nhiệm vụ Nhân viên / Quản lý Sân|
+
+|Khách Hàng|
+start
+:1. Khách có nhu cầu đặt sân thi đấu;
+
+repeat
+  :2. Nhắn tin Zalo / Gọi điện thoại hỏi giờ sân;
+  
+  |Nhiệm vụ Nhân viên / Quản lý Sân|
+  :3. Mở Sổ tay ghi chép / File Excel tra cứu lịch trống;
+
+  note right #FFEEEE
+    <color:#DC2626><b>⚠️ NGUY CƠ 1: TRÙNG LỊCH (OVERBOOKING)</b></color>
+    2 nhân viên cùng chốt 1 sân tại cùng 1 thời điểm
+    hoặc ghi chép sót/nhầm sổ tay thủ công.
+  end note
+
+  if (Khung giờ yêu cầu còn sân trống?) then (Hết sân)
+    :Thông báo hết sân & Đề xuất khung giờ khác;
+    |Khách Hàng|
+    if (Khách đồng ý đổi sang giờ khác?) then (Từ chối)
+      :Khách hủy ý định đặt sân;
+      stop
+    else (Đồng ý đổi giờ)
+      :Khách chọn khung giờ thay thế;
+    endif
+  else (Còn sân)
+    break
+  endif
+repeat while (Tiếp tục kiểm tra lịch mới)
+
+|Nhiệm vụ Nhân viên / Quản lý Sân|
+:4. Báo giá & Gửi STK ngân hàng cá nhân yêu cầu đặt cọc;
+
+|Khách Hàng|
+:5. Chuyển khoản cọc 30% - 50% tiền sân;
+:6. Chụp ảnh màn hình Biên lai (Bill chuyển tiền) gửi Zalo;
+
+|Nhiệm vụ Nhân viên / Quản lý Sân|
+note right #FFEEEE
+  <color:#DC2626><b>⚠️ NGUY CƠ 2: MẤT 5 - 15 PHÚT ĐỐI SOÁT</b></color>
+  Kiểm tra thủ công biến động số dư tài khoản cá nhân,
+  dễ bị làm giả bill hoặc nhầm lẫn nội dung chuyển khoản.
+end note
+
+:7. Mở App Ngân hàng đối soát tiền thực nhận;
+:8. Điền tên khách & khung giờ vào Sổ tay / File Excel;
+
+|Khách Hàng|
+:Nhận tin nhắn xác nhận chốt sân qua Zalo;
+
+|Nhiệm vụ Nhân viên / Quản lý Sân|
+if (Tình trạng đến sân vào ngày thi đấu?) then (Đến đúng giờ)
+  |Khách Hàng|
+  :9. Đến sân nhận sân & Thi đấu;
+  :10. Thanh toán nốt số tiền còn lại sau trận đấu;
+  |Nhiệm vụ Nhân viên / Quản lý Sân|
+  :Thu tiền mặt / QR & Gạch sổ hoàn tất ca;
+  stop
+else (Khách hủy lịch / Không đến - No-Show)
+  |Nhiệm vụ Nhân viên / Quản lý Sân|
+  :Xử lý hủy cọc / Tịch thu cọc theo quy định;
+  :Sân bị bỏ trống trong khung giờ vàng;
+  note right #FFEEEE
+    <color:#DC2626><b>⚠️ NGUY CƠ 3: THẤT THOÁT DOANH THU & TRANH CHẤP CỌC</b></color>
+    Không có cơ chế tự động đẩy Flash Sale bù khách giờ vàng;
+    Dễ phát sinh tranh chấp đòi lại tiền cọc khi trời mưa hoặc thiếu người.
+  end note
+  stop
+endif
+
+@enduml
+

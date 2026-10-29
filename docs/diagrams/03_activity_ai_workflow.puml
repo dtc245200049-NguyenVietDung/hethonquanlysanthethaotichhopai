@@ -1,0 +1,88 @@
+@startuml
+!theme plain
+skinparam roundcorner 8
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #1E3A8A
+    ArrowColor #1E3A8A
+}
+
+title <size:15><b>SƠ ĐỒ HOẠT ĐỘNG LUỒNG XỬ LÝ AGENTIC AI CHATBOT</b></size>\n<size:11><i>Thay thế img_1.png - Chuẩn hóa theo Gemini 1.5/2.0 Function Calling & Graceful Degradation Fallback</i></size>
+
+start
+
+:Người dùng gửi tin nhắn trên Giao diện Web (Chatbot Widget);
+
+:Backend tiếp nhận yêu cầu (POST /api/chat)
+Xác thực JWT Token & Trích xuất UserContext (idUser, role);
+
+if (Nội dung tin nhắn hợp lệ?) then (Không)
+  :Trả mã lỗi HTTP 400 Bad Request;
+  stop
+else (Có)
+  :Ghi nhận tin nhắn vào CSDL **ChatHistory** (role='user');
+  :Khởi tạo Rolling Buffer History (N=10);
+endif
+
+if (Cấu hình GEMINI_API_KEY hợp lệ?) then (Có)
+  :Khởi tạo phiên hội thoại Gemini SDK
+  • Model: gemini-1.5-flash / gemini-2.0
+  • Inject Dynamic System Instruction (UTC+7)
+  • Lọc danh mục Tools theo RBAC Lớp 1 (Customer vs Admin);
+
+  :Gửi User Message + History tới Gemini API (Lượt 1);
+  
+  if (Gemini phản hồi trong Timeout 8s?) then (Thành công)
+    if (Gemini yêu cầu Function Calling?) then (Có Tool Call)
+      :Trích xuất toolName & toolArgs;
+      
+      partition "**aiToolDispatcher (Thực thi & RBAC Lớp 2)**" {
+        if (tool == 'generate_revenue_report' VÀ role != 'admin'?) then (Vi phạm RBAC)
+          :Chặn thực thi, trả lỗi 403 Forbidden;
+        else (Hợp lệ)
+          :Thực thi Parameterized SQL Query vào SQLite
+          (SanTheThao / LichDatSan / HoaDonDoanhThu);
+          :Đóng gói kết quả Tool Response Payload (JSON);
+        endif
+      }
+      
+      :Gửi Tool Response về Gemini (Lượt 2 - Synthesize);
+      :Gemini tổng hợp câu trả lời tự nhiên + Action Card;
+    else (Không có Tool Call)
+      :Gemini sinh phản hồi tự nhiên trực tiếp;
+    endif
+  else (Timeout 8s / Lỗi API)
+    :Kích hoạt **Graceful Degradation Fallback Engine**;
+    :Phân loại ý định bằng Rule-based Regex NLU cục bộ;
+    if (Hỏi Doanh thu VÀ role == 'admin'?) then (Có)
+      :Query bảng HoaDonDoanhThu cục bộ;
+      :Format báo cáo doanh thu Markdown;
+    else if (Hỏi Tra cứu Sân trống?) then (Có)
+      :Query SanTheThao & LichDatSan cục bộ;
+      :Format danh sách sân trống gợi ý;
+    else (Khác)
+      :Trả câu trả lời FAQ / Điều hướng hotline;
+    endif
+  endif
+else (Không có Key)
+  :Chuyển thẳng sang **Local Rule-based Engine**;
+  :Xử lý qua bộ quy tắc từ khóa nội bộ;
+endif
+
+:Bộ lọc kiểm duyệt an toàn (Safety Guardrails Check);
+
+:Lưu phản hồi vào CSDL **ChatHistory** (role='model');
+
+:Trả về HTTP 200 OK
+(Formatted Markdown + Action Card Sân bóng);
+
+:Hiển thị trực quan trên giao diện Chatbot Web;
+
+stop
+
+@enduml

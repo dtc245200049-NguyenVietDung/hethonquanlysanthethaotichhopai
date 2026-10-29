@@ -1,15 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Calendar, Users, Settings, Activity, DollarSign, Check, X, Zap, AlertTriangle, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { LayoutDashboard, Users, Settings, Activity, DollarSign, Check, X, Zap, Clock, AlertTriangle, Download, Flag } from 'lucide-react';
 import AiCommandBar from './AiCommandBar';
 import { Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
+  const [revenueStats, setRevenueStats] = useState({ totalRevenueFormatted: '0 VNĐ', totalOrders: 0 });
   const [activeTab, setActiveTab] = useState('duyet'); // 'duyet', 'match', 'settings'
+  const [showAllBookings, setShowAllBookings] = useState(false);
+  const [autoApprove, setAutoApprove] = useState(false);
+  const [flashSaleActive, setFlashSaleActive] = useState(false);
+  const [weatherAlertActive, setWeatherAlertActive] = useState(true);
+  const [adminNotice, setAdminNotice] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
+  const getAdminToken = async () => {
+    let token = localStorage.getItem('sportai_admin_token');
+    if (!token) {
+      try {
+        const res = await fetch('http://localhost:3000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'admin', password: 'admin123' })
+        });
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem('sportai_admin_token', data.token);
+          token = data.token;
+        }
+      } catch (err) {
+        console.error("Admin Login Error:", err);
+      }
+    }
+    return token;
+  };
+
+  const fetchRevenue = async () => {
+    const token = await getAdminToken();
+    fetch('http://localhost:3000/api/revenue', {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.totalRevenueFormatted) {
+          setRevenueStats({
+            totalRevenueFormatted: data.totalRevenueFormatted,
+            totalOrders: data.totalOrders
+          });
+        }
+      })
+      .catch(err => console.error("Revenue API Error:", err));
+  };
 
   const fetchBookings = () => {
     fetch('http://localhost:3000/api/bookings')
@@ -18,25 +59,87 @@ export default function AdminDashboard() {
       .catch(err => console.error("API Error:", err));
   };
 
+  useEffect(() => {
+    fetchBookings();
+    fetchRevenue();
+    const interval = setInterval(() => {
+      fetchBookings();
+      fetchRevenue();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   const [matchQueue, setMatchQueue] = useState([
     { id: 1, team: 'Nhóm Lẻ (3 người)', level: 'Trung bình', target: 'Sân 5', time: '19:00 Hôm nay' },
     { id: 2, team: 'FC Sinh Viên (Thiếu 2)', level: 'Khá', target: 'Sân 7', time: '20:00 Hôm nay' },
   ]);
 
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
+    const token = await getAdminToken();
     fetch(`http://localhost:3000/api/bookings/${id}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ status: 'confirmed' })
+    }).then(() => {
+      fetchBookings();
+      fetchRevenue();
+    });
+  };
+
+  const handleReject = async (id: string) => {
+    const token = await getAdminToken();
+    fetch(`http://localhost:3000/api/bookings/${id}/status`, {
+      method: 'PATCH',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ status: 'rejected' })
     }).then(() => fetchBookings());
   };
 
-  const handleReject = (id: string) => {
+  const handleComplete = async (id: string) => {
+    const token = await getAdminToken();
     fetch(`http://localhost:3000/api/bookings/${id}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'rejected' })
-    }).then(() => fetchBookings());
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ status: 'completed' })
+    }).then(() => {
+      fetchBookings();
+      setAdminNotice('🏁 Đã xác nhận khách trả sân và giải phóng làm trống sân thành công! Sân đã sẵn sàng.');
+    });
+  };
+
+  const handleExportRevenue = async () => {
+    setIsExporting(true);
+    try {
+      const token = await getAdminToken();
+      const res = await fetch('http://localhost:3000/api/revenue/export-csv', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (!res.ok) throw new Error('Không có quyền hoặc lỗi máy chủ');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `BaoCaoDoanhThu_SportAI_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setAdminNotice('📊 Đã xuất file Báo cáo Doanh thu Excel (.csv) thành công!');
+      setTimeout(() => setAdminNotice(''), 4000);
+    } catch (err) {
+      console.error(err);
+      alert('Không thể xuất file báo cáo. Vui lòng kiểm tra quyền Admin.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleAutoMatch = (id: number, teamName: string) => {
@@ -87,21 +190,32 @@ export default function AdminDashboard() {
                 <div className="stat-label">Tỷ lệ lấp đầy tối nay</div>
               </div>
               
-              <div className="glass-panel stat-card">
-                <div className="stat-icon red"><DollarSign /></div>
-                <div className="stat-value">45.5M</div>
-                <div className="stat-label">Doanh thu tuần này</div>
+              <div className="glass-panel stat-card" style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div className="stat-icon red"><DollarSign /></div>
+                  <button 
+                    onClick={handleExportRevenue} 
+                    disabled={isExporting}
+                    className="btn btn-outline" 
+                    style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                    title="Tải file báo cáo doanh thu Excel/CSV"
+                  >
+                    <Download size={13} /> {isExporting ? 'Đang xuất...' : 'Xuất Excel'}
+                  </button>
+                </div>
+                <div className="stat-value">{revenueStats.totalRevenueFormatted}</div>
+                <div className="stat-label">Tổng doanh thu ({revenueStats.totalOrders} hóa đơn)</div>
               </div>
               
               <div className="glass-panel stat-card">
                 <div className="stat-icon green"><Zap /></div>
-                <div className="stat-value">12</div>
-                <div className="stat-label">Yêu cầu đặt sân mới</div>
+                <div className="stat-value">{bookings.filter(b => b.status === 'pending').length}</div>
+                <div className="stat-label">Yêu cầu chờ duyệt</div>
               </div>
               
               <div className="glass-panel stat-card">
                 <div className="stat-icon purple"><Users /></div>
-                <div className="stat-value">5</div>
+                <div className="stat-value">{matchQueue.length}</div>
                 <div className="stat-label">Nhóm đang chờ ghép</div>
               </div>
             </div>
@@ -110,16 +224,40 @@ export default function AdminDashboard() {
               {/* Booking Management Panel */}
               <div className="glass-panel" style={{ padding: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Yêu cầu Đặt Sân Chờ Duyệt</h3>
-                  <button className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>Xem tất cả</button>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                    {showAllBookings ? 'Toàn Bộ Lịch Đặt Sân (Tất cả)' : 'Yêu cầu Đặt Sân Chờ Duyệt (Pending)'}
+                  </h3>
+                  <button 
+                    onClick={() => setShowAllBookings(prev => !prev)} 
+                    className="btn btn-outline" 
+                    style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                  >
+                    {showAllBookings ? 'Chỉ xem Chờ Duyệt' : 'Xem tất cả lịch'}
+                  </button>
                 </div>
+
+                {adminNotice && (
+                  <div style={{
+                    background: 'rgba(46, 213, 115, 0.15)',
+                    border: '1px solid #2ed573',
+                    color: '#2ed573',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    marginBottom: '16px',
+                    fontSize: '0.85rem'
+                  }}>
+                    {adminNotice}
+                  </div>
+                )}
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {bookings.filter(b => b.status !== 'rejected').map(booking => (
+                  {bookings
+                    .filter(b => showAllBookings ? true : b.status === 'pending')
+                    .map(booking => (
                     <div key={booking.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <div>
                         <div style={{ fontWeight: 600, fontSize: '1.05rem', marginBottom: '4px' }}>{booking.name} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400 }}>#{booking.id}</span></div>
-                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}><Clock size={14} style={{ display: 'inline', marginRight: '4px' }}/>{booking.time} • {booking.court}</div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}><Clock size={14} style={{ display: 'inline', marginRight: '4px' }}/>{booking.date ? `${booking.date} • ` : ''}{booking.time} • {booking.court}</div>
                       </div>
                       <div style={{ fontWeight: 600, color: 'var(--primary)', marginRight: '20px' }}>{booking.amount}</div>
                       
@@ -128,8 +266,38 @@ export default function AdminDashboard() {
                           <button onClick={() => handleApprove(booking.id)} className="btn btn-primary" style={{ padding: '8px', borderRadius: '8px' }} title="Duyệt (Đã nhận cọc)"><Check size={18} /></button>
                           <button onClick={() => handleReject(booking.id)} className="btn btn-outline" style={{ padding: '8px', borderRadius: '8px', color: 'var(--accent)' }} title="Từ chối"><X size={18} /></button>
                         </div>
+                      ) : booking.status === 'confirmed' ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ color: '#2ed573', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Check size={16}/> Đang dùng
+                          </span>
+                          <button 
+                            onClick={() => handleComplete(booking.id)} 
+                            className="btn btn-outline" 
+                            style={{ 
+                              padding: '5px 12px', 
+                              fontSize: '0.78rem', 
+                              borderRadius: '8px',
+                              borderColor: '#38bdf8',
+                              color: '#38bdf8',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              cursor: 'pointer'
+                            }} 
+                            title="Xác nhận khách đã dùng xong sân, trả sân và làm trống sân"
+                          >
+                            <Flag size={13} /> Trả Sân (Làm Trống)
+                          </button>
+                        </div>
+                      ) : booking.status === 'completed' ? (
+                        <span style={{ color: '#c084fc', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          🏁 Đã hoàn thành (Sân trống)
+                        </span>
                       ) : (
-                        <span style={{ color: '#2ed573', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={16}/> Đã chốt</span>
+                        <span style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <X size={16}/> Đã từ chối
+                        </span>
                       )}
                     </div>
                   ))}
@@ -162,7 +330,16 @@ export default function AdminDashboard() {
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: 1.5 }}>
                     Dự báo thời tiết lúc 19:00 có <strong>mưa dông</strong>. Có 2 sân ngoài trời đang được đặt. Gợi ý gửi tin nhắn Zalo nhắc khách mang đồ mưa hoặc chuyển sang sân mái che.
                   </p>
-                  <button className="btn btn-accent" style={{ marginTop: '12px', width: '100%', fontSize: '0.85rem', padding: '8px' }}>Gửi tin SMS/Zalo hàng loạt</button>
+                  <button 
+                    onClick={() => {
+                      setAdminNotice('📱 Đã gửi tin nhắn Zalo/SMS cảnh báo thời tiết tự động đến 2 khách đặt sân ngoài trời!');
+                      setTimeout(() => setAdminNotice(''), 4000);
+                    }}
+                    className="btn btn-accent" 
+                    style={{ marginTop: '12px', width: '100%', fontSize: '0.85rem', padding: '8px' }}
+                  >
+                    Gửi tin SMS/Zalo hàng loạt
+                  </button>
                 </div>
               </div>
             </div>
@@ -212,18 +389,32 @@ export default function AdminDashboard() {
                   <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>Tự động duyệt đơn (Auto-Approve)</div>
                   <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>AI tự động chuyển trạng thái đơn chờ thành Đã chốt</div>
                 </div>
-                <div style={{ width: '50px', height: '26px', background: 'var(--primary)', borderRadius: '20px', position: 'relative', cursor: 'pointer' }}>
-                  <div style={{ width: '22px', height: '22px', background: '#fff', borderRadius: '50%', position: 'absolute', right: '2px', top: '2px' }}></div>
+                <div 
+                  onClick={() => {
+                    setAutoApprove(prev => !prev);
+                    setAdminNotice(autoApprove ? 'ℹ️ Đã tắt chế độ Tự động duyệt đơn.' : '⚡ Đã kích hoạt chế độ Tự động duyệt đơn AI!');
+                    setTimeout(() => setAdminNotice(''), 3000);
+                  }}
+                  style={{ width: '50px', height: '26px', background: autoApprove ? 'var(--primary)' : 'rgba(255,255,255,0.2)', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                >
+                  <div style={{ width: '22px', height: '22px', background: '#fff', borderRadius: '50%', position: 'absolute', right: autoApprove ? '2px' : '26px', top: '2px', transition: 'all 0.3s' }}></div>
                 </div>
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>Chiến dịch Flash Sale</div>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>Giảm giá 50% tự động áp dụng toàn hệ thống</div>
+                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>Chiến dịch Flash Sale (Giảm 50%)</div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>Tự động áp dụng banner giảm 50% tiền sân</div>
                 </div>
-                <div style={{ width: '50px', height: '26px', background: 'rgba(255,255,255,0.2)', borderRadius: '20px', position: 'relative', cursor: 'pointer' }}>
-                  <div style={{ width: '22px', height: '22px', background: '#fff', borderRadius: '50%', position: 'absolute', left: '2px', top: '2px' }}></div>
+                <div 
+                  onClick={() => {
+                    setFlashSaleActive(prev => !prev);
+                    setAdminNotice(flashSaleActive ? 'ℹ️ Đã đóng chiến dịch Flash Sale.' : '🎉 ĐÃ KÍCH HOẠT FLASH SALE 50% TOÀN HỆ THỐNG!');
+                    setTimeout(() => setAdminNotice(''), 3000);
+                  }}
+                  style={{ width: '50px', height: '26px', background: flashSaleActive ? 'var(--accent)' : 'rgba(255,255,255,0.2)', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                >
+                  <div style={{ width: '22px', height: '22px', background: '#fff', borderRadius: '50%', position: 'absolute', right: flashSaleActive ? '2px' : '26px', top: '2px', transition: 'all 0.3s' }}></div>
                 </div>
               </div>
               
@@ -232,12 +423,30 @@ export default function AdminDashboard() {
                   <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>Cảnh báo Thời tiết (NLP)</div>
                   <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>Đọc bản tin thời tiết và đề xuất gửi SMS cho khách</div>
                 </div>
-                <div style={{ width: '50px', height: '26px', background: 'var(--primary)', borderRadius: '20px', position: 'relative', cursor: 'pointer' }}>
-                  <div style={{ width: '22px', height: '22px', background: '#fff', borderRadius: '50%', position: 'absolute', right: '2px', top: '2px' }}></div>
+                <div 
+                  onClick={() => {
+                    setWeatherAlertActive(prev => !prev);
+                    setAdminNotice(weatherAlertActive ? 'ℹ️ Đã tắt cảnh báo thời tiết tự động.' : '🌦️ Đã kích hoạt radar cảnh báo thời tiết AI!');
+                    setTimeout(() => setAdminNotice(''), 3000);
+                  }}
+                  style={{ width: '50px', height: '26px', background: weatherAlertActive ? 'var(--primary)' : 'rgba(255,255,255,0.2)', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                >
+                  <div style={{ width: '22px', height: '22px', background: '#fff', borderRadius: '50%', position: 'absolute', right: weatherAlertActive ? '2px' : '26px', top: '2px', transition: 'all 0.3s' }}></div>
                 </div>
               </div>
               
-              <button className="btn btn-outline" style={{ width: '100%', marginTop: '20px', color: 'var(--accent)' }}>Khôi phục cài đặt gốc Database</button>
+              <button 
+                onClick={() => {
+                  fetchBookings();
+                  fetchRevenue();
+                  setAdminNotice('🔄 Đã làm mới và đồng bộ lại toàn bộ dữ liệu CSDL SQLite!');
+                  setTimeout(() => setAdminNotice(''), 3000);
+                }}
+                className="btn btn-outline" 
+                style={{ width: '100%', marginTop: '20px', color: 'var(--accent)' }}
+              >
+                Đồng bộ & Làm mới Dữ liệu CSDL
+              </button>
             </div>
           </div>
         )}

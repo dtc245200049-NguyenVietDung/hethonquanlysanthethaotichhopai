@@ -1,0 +1,66 @@
+@startuml
+!theme plain
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam actor {
+    BackgroundColor #EFF6FF
+    BorderColor #1E3A8A
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1E3A8A
+    ArrowColor #1E3A8A
+}
+
+left to right direction
+
+title <size:15><b>GÓI USE CASE: ĐẶT SÂN & THANH TOÁN TRỰC TUYẾN (UC02 - UC04)</b></size>\n<size:11><i>Cấu trúc Use Case chuẩn hóa nghiệp vụ đặt chỗ, dịch vụ mở rộng và thanh toán</i></size>
+
+actor "Khách hàng\n(Customer)" as User
+actor "Cổng Thanh toán\n(Ngân hàng / QR)" as Payment <<Secondary>>
+
+rectangle "Gói Chức năng: Đặt sân & Thanh toán Trực tuyến (SportAI Booking Engine)" #F8FAFC {
+    usecase "UC02: Tra cứu lịch & Đặt sân trực tuyến" as UC02
+    usecase "UC04_1: Kiểm tra tình trạng sân & Khóa giữ chỗ" as UC04_1
+    usecase "UC03: Đăng ký dịch vụ thể thao đi kèm\n(Dụng cụ / Huấn luyện viên)" as UC03
+    
+    usecase "UC04: Thanh toán đơn đặt sân trực tuyến" as UC04
+    usecase "UC04_3: Xuất phiếu xác nhận & Lập hóa đơn" as UC04_3
+    usecase "UC04_E1: Hủy giữ chỗ khi quá hạn thanh toán\n(Giải phóng lịch sau 15 phút)" as UC04_E1
+}
+
+' Tác nhân Khách hàng
+User -- UC02
+User -- UC04
+
+' Quan hệ <<include>> giữa Use Case (Không xâu chuỗi dạng Flowchart)
+UC02 ..> UC04_1 : <<include>>
+UC02 ..> UC04 : <<include>>
+UC04 ..> UC04_3 : <<include>>
+
+' Quan hệ <<extend>>: Hướng mũi tên từ Use Case mở rộng trỏ về Use Case cơ sở
+UC03 ..> UC02 : <<extend>>\n(Khi có nhu cầu thuê thêm)
+UC04_E1 ..> UC04 : <<extend>>\n(Khi hết hạn thanh toán)
+
+' Tác nhân Cổng thanh toán
+UC04 -- Payment : Đối soát & Xác nhận giao dịch
+
+note bottom of UC04_1
+  <b>Cơ chế An toàn Concurrency:</b>
+  * Khóa chống trùng lịch 2 tầng (Double-Check Locking)
+  * Unique Constraint SQLite ngăn chặn Race Condition (409)
+  * Overlap Interval: <i>gioBatDau < endTime AND gioKetThuc > startTime</i>
+end note
+
+note right of UC03
+  <b>Phạm vi:</b>
+  UC03 thuộc gói mở rộng (Phase 2).
+end note
+
+@enduml
+

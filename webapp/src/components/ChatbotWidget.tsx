@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, CheckCircle, Star, Zap, Clock, CalendarDays, TrendingUp } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { X, Send, Bot, CheckCircle, Star, Zap } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function ChatbotWidget() {
+  const { user, token } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<any[]>([
     {
@@ -31,88 +33,126 @@ export default function ChatbotWidget() {
     setIsTyping(true);
 
     const lowerInput = input.toLowerCase();
-    
-    // Nâng cấp: Phân tích Intent thông minh hơn (Keyword extraction & Pattern matching)
-    setTimeout(() => {
-      let aiResponse: any = {};
-      
-      const intentBook = /sân|đặt|trống|đá|lịch/i.test(lowerInput);
-      const intentPrice = /giá|tiền|bao nhiêu/i.test(lowerInput);
-      const intentMatch = /ghép|team|đội|cạ/i.test(lowerInput);
-      const intentAbility = /làm|gì|tính năng|chức năng/i.test(lowerInput);
 
-      if (intentPrice) {
-        aiResponse = {
-          id: Date.now() + 1,
-          sender: 'ai',
-          text: 'Hệ thống định giá của chúng tôi ứng dụng **Dynamic Pricing** (Định giá linh hoạt):\n• **08h - 15h:** Chỉ `120,000đ/h` (Giảm 50% cho Sinh viên).\n• **16h - 22h:** `250,000đ/h` (Khung giờ Vàng).\nBạn muốn kiểm tra khung giờ cụ thể nào?'
-        };
-      } else if (intentMatch) {
-        aiResponse = {
-          id: Date.now() + 1,
-          sender: 'ai',
-          text: 'Tất nhiên rồi! Thuật toán ghép đội hiện đang phát hiện **3 nhóm (Level Trung bình - Elo ~1200)** đang thiếu người đá vào lúc 19h00 tối nay. Họ sẵn sàng chia đều chi phí (Campuchia).\nBạn có muốn tham gia vào nhóm Zalo để bắt cặp ngay không?',
-          actionCard: {
-            title: 'Trận giao hữu: FC Anh Em',
-            price: 'Chi phí: ~40,000đ/người',
-            img: 'https://images.unsplash.com/photo-1518605368461-1ee7e53f1a9a?w=300&q=80',
-            rating: 4.8,
-            tags: ['Sân 7', '19:00', 'Thiếu 2']
-          },
-          btnAction: 'Tham gia ghép đội'
-        };
-      } else if (intentBook) {
-        // Phân tích có trích xuất giờ (17h, 19h, tối nay...)
-        let timeStr = 'tối nay';
-        if (lowerInput.match(/\d+h/)) {
-          timeStr = lowerInput.match(/\d+h/)[0];
-        }
-        
-        if (lowerInput.includes('đặt sân') || lowerInput.includes('chốt sân')) {
-          // Gọi API Đặt Sân thực tế!
-          fetch('http://localhost:3000/api/bookings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: 'Khách (Từ Chatbot AI)', courtId: 1, time: timeStr, amount: '250,000đ' })
-          });
-          
-          aiResponse = {
+    // 1. Nếu khách hàng muốn chốt đặt sân trực tiếp từ chatbot
+    if (lowerInput.includes('đặt sân') || lowerInput.includes('chốt sân')) {
+      let timeStr = '19:00 - 20:30';
+      const matchHour = lowerInput.match(/\d+h/);
+      if (matchHour && matchHour[0]) {
+        timeStr = matchHour[0];
+      }
+      
+      fetch('http://localhost:3000/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: 'Khách (Từ Chatbot AI)', 
+          courtId: 1, 
+          date: new Date().toISOString().split('T')[0],
+          time: timeStr, 
+          amount: 250000 
+        })
+      })
+      .then(async res => {
+        const data = await res.json();
+        if (res.status === 201) {
+          setMessages(prev => [...prev, {
             id: Date.now() + 1,
             sender: 'ai',
             text: `✅ **Đặt sân tự động thành công!**\nTôi vừa đẩy thẳng yêu cầu đặt Sân 7 (${timeStr}) của bạn vào Database. Hãy sang tab Admin để xem đơn chờ duyệt nhé!`
+          }]);
+        } else if (res.status === 409) {
+          setMessages(prev => [...prev, {
+            id: Date.now() + 1,
+            sender: 'ai',
+            text: `⚠️ **Khung giờ bị trùng!**\n${data.message || `Khung giờ ${timeStr} này sân đã có người đặt trước rồi. Tôi gợi ý bạn thử khung giờ khác nhé!`}`
+          }]);
+        } else {
+          setMessages(prev => [...prev, {
+            id: Date.now() + 1,
+            sender: 'ai',
+            text: `⚠️ Lỗi khi gửi đơn đặt sân: ${data.message || 'Vui lòng thử lại sau.'}`
+          }]);
+        }
+        setIsTyping(false);
+      })
+      .catch(err => {
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          sender: 'ai',
+          text: `⚠️ Không thể kết nối tới máy chủ: ${err.message}`
+        }]);
+        setIsTyping(false);
+      });
+      return;
+    }
+
+    // 2. Gọi Backend Gemini & Agentic Function Calling Engine
+    fetch('http://localhost:3000/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        message: input,
+        history: messages.slice(-6).map(m => ({ sender: m.sender, text: m.text }))
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.text) {
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          sender: 'ai',
+          text: data.text,
+          actionCard: data.actionCard
+        }]);
+        setIsTyping(false);
+      } else {
+        throw new Error('Dữ liệu API không hợp lệ');
+      }
+    })
+    .catch(err => {
+      console.warn('Backend chat API error, executing client fallback:', err);
+      // Fallback cục bộ tại Client
+      setTimeout(() => {
+        let aiResponse: any = {};
+        const intentPrice = /giá|tiền|bao nhiêu/i.test(lowerInput);
+        const intentMatch = /ghép|team|đội|cạ/i.test(lowerInput);
+
+        if (intentPrice) {
+          aiResponse = {
+            id: Date.now() + 1,
+            sender: 'ai',
+            text: '🏷️ **BẢNG GIÁ NIÊM YẾT SÂN THỂ THAO:**\n• Sân Tập B2 (Sân 5): `150,000 VNĐ/h`\n• Sân Trung Tâm A1 (Sân 7): `250,000 VNĐ/h`\n• Sân VIP C3 (Sân 7 VIP): `300,000 VNĐ/h`'
+          };
+        } else if (intentMatch) {
+          aiResponse = {
+            id: Date.now() + 1,
+            sender: 'ai',
+            text: 'Thuật toán ghép đội hiện đang phát hiện **3 nhóm (Level Trung bình - Elo ~1200)** đang thiếu người đá vào lúc 19h00 tối nay. Bạn có muốn tham gia không?',
+            actionCard: {
+              title: 'Trận giao hữu: FC Anh Em',
+              price: 'Chi phí: ~40,000đ/người',
+              img: 'https://images.unsplash.com/photo-1518605368461-1ee7e53f1a9a?w=300&q=80',
+              rating: 4.8,
+              tags: ['Sân 7', '19:00', 'Thiếu 2']
+            },
+            btnAction: 'Tham gia ghép đội'
           };
         } else {
           aiResponse = {
             id: Date.now() + 1,
             sender: 'ai',
-            text: `Tôi đã quét toàn bộ CSDL. Rất tiếc, khung giờ cao điểm ${timeStr} các sân 7 người đã được chốt cọc 100%.\n\n🔥 **ĐỀ XUẤT THAY THẾ:**\nTuy nhiên, Sân VIP C3 sẽ trống vào lúc **20:30**. Hệ thống đang có voucher giảm 20% cho khung giờ này. Bạn xem thẻ thông tin bên dưới nhé:`,
-            actionCard: {
-              title: 'Sân VIP C3 (Cỏ Nhân Tạo Chuẩn FIFA)',
-              price: '240,000đ/h (Đã giảm 20%)',
-              img: 'https://images.unsplash.com/photo-1508344928928-7165b67de128?w=300&q=80',
-              rating: 5.0,
-              tags: ['Có nước lọc', 'Giày thuê miễn phí', 'Sân 7']
-            },
-            btnAction: 'Giữ chỗ ngay (15 phút)'
+            text: 'Tôi là **SportAI Assistant**.\nTôi có thể hỗ trợ bạn tra cứu lịch sân trống hôm nay, tư vấn giá tiền và đặt sân tự động. Bạn muốn kiểm tra sân lúc mấy giờ?'
           };
         }
-      } else if (intentAbility) {
-        aiResponse = {
-          id: Date.now() + 1,
-          sender: 'ai',
-          text: 'Tôi là **AI Assistant 2.0**.\nTôi có thể hiểu ngôn ngữ tự nhiên để tự động hóa toàn bộ luồng nghiệp vụ của sân:\n1. Tra cứu CSDL Real-time để báo trống.\n2. Phát hiện khung giờ ế để sinh mã giảm giá (Off-peak).\n3. Tự động thu thập doanh thu vẽ biểu đồ cho Admin.\n4. Tìm đối thủ và ghép team theo hệ số Elo.'
-        };
-      } else {
-        aiResponse = {
-          id: Date.now() + 1,
-          sender: 'ai',
-          text: 'Rất xin lỗi, dữ liệu RAG hiện tại của tôi được khoanh vùng tập trung vào: **Lịch Sân, Bảng Giá, và Ghép Đội**. \nBạn có thể thử nhập lại theo các từ khóa trên nhé!'
-        };
-      }
 
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1500 + Math.random() * 1000); // Thêm độ trễ thực tế
+        setMessages(prev => [...prev, aiResponse]);
+        setIsTyping(false);
+      }, 500);
+    });
   };
 
   // Render format Markdown đậm
@@ -164,9 +204,19 @@ export default function ChatbotWidget() {
               <div>
                 <div className="chat-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   SportAI Assistant <CheckCircle size={14} color="#2ed573" />
+                  <span style={{
+                    fontSize: '0.65rem',
+                    padding: '2px 8px',
+                    borderRadius: '100px',
+                    background: user?.role === 'admin' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(14, 165, 233, 0.25)',
+                    color: user?.role === 'admin' ? '#fca5a5' : '#7dd3fc',
+                    border: '1px solid ' + (user?.role === 'admin' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(14, 165, 233, 0.4)')
+                  }}>
+                    {user ? (user.role === 'admin' ? '👑 Admin' : '👤 Khách') : 'Khách vãng lai'}
+                  </span>
                 </div>
                 <div className="chat-status">
-                  <span className="status-dot"></span> Đang trực tuyến (Real-time DB)
+                  <span className="status-dot"></span> Đang trực tuyến (Gemini 2.0 / Local NLU)
                 </div>
               </div>
             </div>

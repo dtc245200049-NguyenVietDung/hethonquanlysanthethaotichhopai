@@ -1,0 +1,97 @@
+@startuml
+!theme plain
+skinparam linetype ortho
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    ArrowColor #1E3A8A
+    BorderColor #1E3A8A
+    HeaderBackgroundColor #EFF6FF
+}
+
+title <size:16><b>SƠ ĐỒ QUAN HỆ THỰC THỂ (ERD) - HỆ THỐNG SPORTAI</b></size>\n<size:11><i>Nguồn chân lý: backend/server.js (SQLite 3NF, Bi-directional Traceability 1:1, Concurrency Safe)</i></size>
+
+entity "Users" as Users {
+    * <b>id</b> : INTEGER <<PK, AUTOINCREMENT>>
+    --
+    * <b>username</b> : TEXT <<UNIQUE, NOT NULL>>
+    * <b>password_hash</b> : TEXT <<NOT NULL>>
+    * <b>fullName</b> : TEXT <<NOT NULL>>
+    * <b>role</b> : TEXT <<DEFAULT 'customer'>>
+    createdAt : DATETIME <<DEFAULT CURRENT_TIMESTAMP>>
+}
+
+entity "SanTheThao" as SanTheThao {
+    * <b>id</b> : INTEGER <<PK, AUTOINCREMENT>>
+    --
+    * <b>tenSan</b> : TEXT <<NOT NULL>>
+    * <b>loaiSan</b> : TEXT <<NOT NULL>>
+    * <b>giaTienGio</b> : INTEGER <<NOT NULL, VNĐ>>
+    hinhAnh : TEXT
+    trangThai : TEXT <<DEFAULT 'active'>>
+}
+
+entity "LichDatSan" as LichDatSan {
+    * <b>id</b> : INTEGER <<PK, AUTOINCREMENT>>
+    --
+    * <b>idSan</b> : INTEGER <<FK, NOT NULL>>
+    idUser : INTEGER <<FK, NULLABLE>>
+    * <b>tenKhachHang</b> : TEXT <<NOT NULL>>
+    * <b>ngayDat</b> : TEXT <<NOT NULL, YYYY-MM-DD>>
+    * <b>khungGio</b> : TEXT <<NOT NULL, HH:mm - HH:mm>>
+    * <b>gioBatDau</b> : TEXT <<NOT NULL, HH:mm>>
+    * <b>gioKetThuc</b> : TEXT <<NOT NULL, HH:mm>>
+    * <b>trangThai</b> : TEXT <<DEFAULT 'pending'>>
+    * <b>tongTien</b> : INTEGER <<NOT NULL, VNĐ>>
+    createdAt : DATETIME <<DEFAULT CURRENT_TIMESTAMP>>
+    --
+    <i><<INDEX: UNIQUE(idSan, ngayDat, khungGio)>></i>
+    <i>WHERE trangThai NOT IN ('rejected', 'cancelled')</i>
+}
+
+entity "HoaDonDoanhThu" as HoaDonDoanhThu {
+    * <b>id</b> : INTEGER <<PK, AUTOINCREMENT>>
+    --
+    * <b>idLichDat</b> : INTEGER <<FK, UNIQUE, NOT NULL>>
+    * <b>tongTien</b> : INTEGER <<NOT NULL, VNĐ>>
+    * <b>ngayThanhToan</b> : TEXT <<NOT NULL, ISO-8601>>
+    phuongThuc : TEXT <<DEFAULT 'Chuyển khoản QR'>>
+}
+
+entity "ChatHistory" as ChatHistory {
+    * <b>id</b> : INTEGER <<PK, AUTOINCREMENT>>
+    --
+    * <b>sessionId</b> : TEXT <<NOT NULL, INDEX>>
+    idUser : INTEGER <<FK, NULLABLE>>
+    * <b>role</b> : TEXT <<NOT NULL, 'user'|'model'>>
+    * <b>message</b> : TEXT <<NOT NULL>>
+    createdAt : DATETIME <<DEFAULT CURRENT_TIMESTAMP>>
+}
+
+' ================= RELATIONS =================
+Users ||..o{ LichDatSan : "tạo đơn\n(idUser -> id)"
+Users ||..o{ ChatHistory : "sở hữu phiên chat\n(idUser -> id)"
+SanTheThao ||--o{ LichDatSan : "được đặt tại\n(idSan -> id)"
+LichDatSan ||--o| HoaDonDoanhThu : "sinh hóa đơn khi confirmed\n(idLichDat -> id)"
+
+' ================= NOTES =================
+note bottom of LichDatSan
+  <b>Giải pháp Kỹ thuật Chống Trùng Lịch & Khoảng giờ:</b>
+  - <b>gioBatDau & gioKetThuc:</b> Cho phép AI Tool Calling
+    truy vấn phạm vi thời gian (Overlap Interval: s1 < e2 AND e1 > s2)
+  - <b>Partial Unique Index:</b> Khóa chặn mức CSDL (DB Lock),
+    triệt tiêu 100% rủi ro Race Condition khi đặt đồng thời.
+end note
+
+note bottom of ChatHistory
+  <b>Bộ nhớ Hội thoại Đa lượt (Multi-Turn Memory):</b>
+  - Lưu trữ toàn bộ lịch sử hỏi đáp của AI Chatbot
+  - Phục vụ nhớ ngữ cảnh và kiểm toán (Audit Trail)
+end note
+
+@enduml

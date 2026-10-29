@@ -1,0 +1,79 @@
+@startuml
+!theme plain
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam node {
+    BackgroundColor #FFFFFF
+    BorderColor #1E3A8A
+}
+
+title <size:15><b>SƠ ĐỒ KIẾN TRÚC TRIỂN KHAI HỆ THỐNG (DEPLOYMENT ARCHITECTURE)</b></size>\n<size:11><i>Kiến trúc Đóng gói Docker Container, Microservices, Lưu trữ SQLite & Kết nối Gemini AI Cloud</i></size>
+
+node "Thiết bị Người dùng (Client Devices)" as Clients #F8FAFC {
+    artifact "Trình duyệt Web (Desktop / Mobile)\n[React 18 + Vite + Tailwind CSS]" as Browser
+}
+
+node "Hạ tầng Máy chủ (Host Server / Docker Host)" as DockerHost #EFF6FF {
+    
+    node "Docker Container: sportai-frontend (Port: 5173)" as FrontendContainer #FFFFFF {
+        component "Nginx / Vite Web Server" as WebServer
+        component "React SPA App\n(CustomerView, AdminDashboard, ChatbotWidget)" as ClientApp
+        WebServer --> ClientApp
+    }
+
+    node "Docker Container: sportai-backend (Port: 3000)" as BackendContainer #FFFFFF {
+        component "Express.js REST API Server" as APIServer
+        component "Auth Middleware\n(JWT & RBAC Guardrail)" as AuthMW
+        component "Booking Service\n(Double-Check Lock & Overlap)" as BookingEngine
+        component "AI Tool Dispatcher\n(Gemini 2-Pass Agentic Loop)" as AIDispatcher
+        component "SQLite Driver\n(sqlite3 verbose)" as SQLiteDriver
+
+        APIServer --> AuthMW
+        APIServer --> BookingEngine
+        APIServer --> AIDispatcher
+        BookingEngine --> SQLiteDriver
+        AIDispatcher --> SQLiteDriver
+    }
+
+    database "Docker Volume Mount: /app/database.db" as DBStorage #ECFDF5 {
+        file "SQLite 3 Engine (database.db)\n• Users\n• SanTheThao\n• LichDatSan\n• HoaDonDoanhThu\n• ChatHistory\n• idx_unique_active_booking" as SQLiteFile
+    }
+
+    FrontendContainer --> BackendContainer : HTTP REST / JSON API (Port 3000)\nCORS Enabled
+    SQLiteDriver --> SQLiteFile : File I/O POSIX Read/Write
+}
+
+cloud "Google Cloud Platform" as CloudAI #FEF2F2 {
+    node "Google Generative AI Service" as GeminiAPI {
+        component "Gemini 1.5 / 2.0 Flash Model\n(Function Calling / Tool Use)" as GeminiModel
+    }
+}
+
+cloud "Hệ thống Thanh toán Ngân hàng" as PaymentCloud #FFFBEB {
+    component "Cổng VietQR / Chuyển khoản Napas 24/7" as VietQR
+}
+
+Browser --> WebServer : HTTPS / WSS (Port 5173 / 443)
+Browser ..> VietQR : Quét mã QR thanh toán cọc
+AIDispatcher --> GeminiModel : HTTPS REST (gemini-2.0-flash / gemini-1.5-flash)\nBearer GEMINI_API_KEY (.env)
+
+note right of DBStorage
+  <b>Lưu trữ Dữ liệu Bền vững (Persistence):</b>
+  * File database.db được ánh xạ qua Docker Volume mount.
+  * Toàn bộ dữ liệu lịch đặt, hóa đơn và lịch sử chat
+    không bị mất khi restart hoặc rebuild container.
+end note
+
+note bottom of BackendContainer
+  <b>Rào chắn An toàn (Security & Zero-Trust):</b>
+  * GEMINI_API_KEY lưu trong .env, không bao giờ lộ ra Client.
+  * Phân quyền RBAC 2 lớp: Chặn truy cập trái phép cấp Route và Tool Dispatcher.
+  * Khóa chống trùng lịch cứng tại cấp CSDL SQLite (Composite Partial Unique Index).
+end note
+
+@enduml
+

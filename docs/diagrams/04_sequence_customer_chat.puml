@@ -1,0 +1,86 @@
+@startuml
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam style strictuml
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+
+skinparam sequence {
+    ParticipantBorderColor #1E3A8A
+    ParticipantBackgroundColor #EFF6FF
+    ParticipantFontColor #0F172A
+    LifeLineBorderColor #2563EB
+    LifeLineBackgroundColor #DBEAFE
+    ArrowColor #1E3A8A
+}
+
+title <size:15><b>SƠ ĐỒ TUẦN TỰ: KHÁCH HÀNG TRA CỨU SÂN TRỐNG QUA AI CHATBOT</b></size>\n<size:11><i>Thay thế img_5.png - Chuẩn hóa Gemini Function Calling 2 lượt (Two-pass loop) & SQLite DB</i></size>
+
+actor "Khách hàng\n(Customer)" as User
+boundary "Giao diện Web\n(ChatbotWidget)" as UI
+control "Backend API\n(POST /api/chat)" as Gateway
+control "geminiService\n(Agentic Loop)" as GeminiService
+entity "Gemini API\n(1.5/2.0 Flash)" as LLM
+control "aiToolDispatcher\n(Tool Handler)" as Dispatcher
+database "CSDL SQLite\n(SanTheThao & LichDatSan)" as DB
+database "CSDL SQLite\n(ChatHistory)" as ChatDB
+
+User -> UI : 1. Nhập câu hỏi:\n"Tối nay 19h sân 5 người còn trống không?"
+activate UI
+
+UI -> Gateway : 2. POST /api/chat\n{ message, sessionId, history }\n[Header: Bearer JWT Token]
+activate Gateway
+
+Gateway -> Gateway : 3. authenticateToken Middleware\n(Giải mã JWT: idUser, role='customer')
+
+Gateway -> ChatDB : 4. INSERT INTO ChatHistory\n(sessionId, idUser, role='user', message)
+activate ChatDB
+ChatDB --> Gateway : Ghi nhận thành công
+deactivate ChatDB
+
+Gateway -> GeminiService : 5. processChatMessage(msg, history, userContext, db)
+activate GeminiService
+
+GeminiService -> LLM : 6. sendMessage(message)\n[LƯỢT 1: Prompt + Dynamic UTC+7 System Instruction + Filtered Tools]
+activate LLM
+
+LLM --> GeminiService : 7. Trả về Tool Call Decision:\nget_available_courts({\n  date: "2026-10-28",\n  start_time: "19:00",\n  end_time: "20:30",\n  sport_type: "Sân 5 người"\n})
+deactivate LLM
+
+GeminiService -> Dispatcher : 8. dispatchToolExecution('get_available_courts', args, userContext, db)
+activate Dispatcher
+
+Dispatcher -> DB : 9. Parameterized Query (Interval Overlap):\nSELECT * FROM SanTheThao WHERE trangThai = 'active'\nAND id NOT IN (SELECT idSan FROM LichDatSan\nWHERE ngayDat = ? AND (khungGio = ? OR (gioBatDau < ? AND gioKetThuc > ?))\nAND trangThai NOT IN ('rejected', 'cancelled'))
+activate DB
+DB --> Dispatcher : 10. Trả về: Sân Tập B2 (Sân 5, 150.000 VNĐ/h)
+deactivate DB
+
+Dispatcher --> GeminiService : 11. Tool Response JSON:\n{ status: "SUCCESS", courts: [{ id: 2, tenSan: "Sân Tập B2", giaTien: "150,000đ" }] }
+deactivate Dispatcher
+
+GeminiService -> LLM : 12. sendMessage(functionResponses)\n[LƯỢT 2: Gửi Tool Result JSON để tổng hợp câu trả lời]
+activate LLM
+
+LLM --> GeminiService : 13. Phản hồi tự nhiên hoàn chỉnh (Natural Response):\n"Dạ tối nay lúc 19:00 - 20:30 sân 5 người **Sân Tập B2** đang còn trống\nvới giá 150.000 VNĐ/h. Bạn có muốn đặt sân ngay không?"
+deactivate LLM
+
+GeminiService --> Gateway : 14. Trả kết quả: { reply, actionCard: { courtId: 2, name: 'Sân Tập B2' } }
+deactivate GeminiService
+
+Gateway -> ChatDB : 15. INSERT INTO ChatHistory\n(sessionId, idUser, role='model', message)
+activate ChatDB
+ChatDB --> Gateway : Ghi nhận thành công
+deactivate ChatDB
+
+Gateway --> UI : 16. HTTP 200 OK\n{ reply: "...", actionCard: {...}, sessionId }
+deactivate Gateway
+
+UI --> User : 17. Hiển thị câu trả lời tự nhiên\nkèm Thẻ Sân Gợi Ý & Nút [Đặt sân ngay]
+deactivate UI
+
+@enduml
+

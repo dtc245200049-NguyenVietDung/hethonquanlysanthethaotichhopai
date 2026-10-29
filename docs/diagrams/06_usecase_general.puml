@@ -1,0 +1,79 @@
+@startuml
+!theme plain
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam actor {
+    BackgroundColor #EFF6FF
+    BorderColor #1E3A8A
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1E3A8A
+    ArrowColor #1E3A8A
+}
+
+left to right direction
+
+title <size:15><b>SƠ ĐỒ TỔNG QUAN USE CASE HỆ THỐNG SPORTAI</b></size>\n<size:11><i>Thay thế img_2.png - 8 Phân hệ Chức năng cốt lõi (Khách hàng, Admin, Hệ thống AI)</i></size>
+
+actor "Khách hàng\n(Customer)" as User
+actor "Chủ sân / Quản trị\n(Admin)" as Admin
+actor "Hệ thống AI Engine\n(Gemini 1.5/2.0)" as AIEngine <<Secondary>>
+
+rectangle "Hệ Thống Quản Lý Sân Thể Thao Tích Hợp AI (SportAI Web)" #F8FAFC {
+    usecase "UC01: Đăng ký & Đăng nhập tài khoản" as UC01
+    usecase "UC02: Tra cứu lịch & Đặt sân trực tuyến" as UC02
+    usecase "UC03: Đặt dịch vụ thể thao đi kèm" as UC03
+    usecase "UC04: Thanh toán đơn đặt sân" as UC04
+    usecase "UC05: Hỏi đáp & Tư vấn qua Trợ lý AI" as UC05
+    usecase "UC06: Quản lý sân, lịch đặt & bảng giá" as UC06
+    usecase "UC07: Báo cáo & Phân tích hoạt động kinh doanh" as UC07
+    usecase "UC08: Đề xuất & Thiết lập chương trình khuyến mãi" as UC08
+
+    ' Canh chỉnh theo chiều dọc từ trên xuống dưới trong chế độ left to right
+    UC01 -[hidden]right-> UC02
+    UC02 -[hidden]right-> UC03
+    UC03 -[hidden]right-> UC04
+    UC04 -[hidden]right-> UC05
+    UC05 -[hidden]right-> UC06
+    UC06 -[hidden]right-> UC07
+    UC07 -[hidden]right-> UC08
+}
+
+' Phân quyền Khách hàng (Association nét liền)
+User -- UC01
+User -- UC02
+User -- UC03
+User -- UC04
+User -- UC05
+
+' Phân quyền Admin (Association nét liền)
+Admin -- UC01
+Admin -- UC06
+Admin -- UC07
+Admin -- UC08
+
+' Tương tác với Hệ thống AI Engine (Secondary Actor - Association nét liền)
+UC05 -- AIEngine : Tư vấn & Tra cứu sân
+UC07 -- AIEngine : Báo cáo doanh thu & KPIs
+UC08 -- AIEngine : Phân tích & Gợi ý giá giờ vắng
+
+note right of UC03
+  <b>Lưu ý:</b>
+  UC03 thuộc gói mở rộng
+  dịch vụ (Phase 2).
+end note
+
+note right of AIEngine
+  <b>Quy chuẩn UML:</b>
+  * Actor liên kết với Use Case qua Association (nét liền).
+  * Tên Use Case mô tả mục tiêu nghiệp vụ thuần túy.
+end note
+
+@enduml
+

@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam state {
+    BackgroundColor #FFFFFF
+    BorderColor #1E3A8A
+    ArrowColor #1E3A8A
+    StartColor #1E3A8A
+    EndColor #1E3A8A
+}
+
+title <size:15><b>SƠ ĐỒ TRẠNG THÁI VÒNG ĐỜI ĐƠN ĐẶT SÂN (BOOKING STATE MACHINE)</b></size>\n<size:11><i>Đồng bộ 100% cột trangThai trong bảng LichDatSan & Khóa chống trùng lịch SQLite</i></size>
+
+[*] --> PENDING : Khách gửi yêu cầu đặt chỗ\n(POST /api/bookings)\nKiểm tra Overlap & Giữ chỗ 15p
+
+state PENDING as "<b>pending</b>\n(Chờ xác nhận / Đang giữ chỗ)" #EFF6FF {
+    state "Kiểm tra thanh toán cọc" as CheckPay
+    state "Đếm ngược thời gian giữ chỗ (15 phút)" as Timer
+}
+
+PENDING --> CONFIRMED : Admin duyệt đơn HOẶC\nKhách chuyển khoản cọc thành công\n[Tự động tạo HoaDonDoanhThu]
+
+PENDING --> REJECTED : Admin từ chối đơn\n(Trùng lịch sự kiện / Sân bảo trì đột xuất)
+
+PENDING --> CANCELLED : Hết hạn thanh toán 15 phút HOẶC\nKhách chủ động hủy yêu cầu\n[Giải phóng khung giờ]
+
+state CONFIRMED as "<b>confirmed</b>\n(Đã xác nhận & Giữ lịch)" #ECFDF5 {
+    state "Khóa chặt khung giờ trong CSDL" as Locked
+    state "Chỉ mục idx_unique_active_booking có hiệu lực" as IndexActive
+}
+
+CONFIRMED --> CANCELLED : Khách báo hủy trước giờ thi đấu\n(Áp dụng chính sách phạt / hoàn cọc)\n[Gỡ bỏ ràng buộc Unique Index]
+
+CONFIRMED --> COMPLETED : Trận đấu kết thúc & Khách thanh toán nốt\n[Gạch sổ ca hoàn tất]
+
+state REJECTED as "<b>rejected</b>\n(Bị từ chối)" #FEF2F2
+state CANCELLED as "<b>cancelled</b>\n(Đã hủy)" #FFFBEB
+state COMPLETED as "<b>completed</b>\n(Hoàn tất ca)" #F0FDF4
+
+REJECTED --> [*]
+CANCELLED --> [*]
+COMPLETED --> [*]
+
+note right of CONFIRMED
+  <b>Quy tắc Báo cáo Doanh thu:</b>
+  * Chỉ các đơn ở trạng thái <b>confirmed</b> (kèm hóa đơn)
+    mới được tính vào doanh thu thực tế của hệ thống.
+  * Đơn <b>pending</b> chưa phát sinh doanh thu chính thức.
+end note
+
+note bottom of IndexActive
+  <b>Cơ chế An toàn Concurrency:</b>
+  Chỉ mục SQLite loại trừ 'rejected' và 'cancelled':
+  <i>WHERE trangThai NOT IN ('rejected', 'cancelled')</i>
+  ngay khi đơn chuyển sang CANCELLED, khung giờ
+  được mở khóa lập tức cho người khác đặt.
+end note
+
+@enduml
+

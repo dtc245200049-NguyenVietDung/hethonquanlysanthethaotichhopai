@@ -25,3 +25,9 @@ venv.bak/
 # OS
 .DS_Store
 Thumbs.db
+
+# Grading criteria / Private reference images (do not commit to git)
+1792988520882_*.jpg
+1792994225697_*.jpg
+*tieu_chi*
+*tieuchi*

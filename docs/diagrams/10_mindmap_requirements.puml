@@ -1,0 +1,42 @@
+@startmindmap
+!theme plain
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+title <size:15><b>SƠ ĐỒ TƯ DUY TỔNG HỢP YÊU CẦU BÀI TOÁN (REQUIREMENTS MINDMAP)</b></size>\n<size:11><i>Phân loại đa chiều: Nghiệp vụ (BR), Người dùng (UR), Phi chức năng (NFR) và Ràng buộc (CON)</i></size>
+
+* **TỔNG HỢP YÊU CẦU**\n**BÀI TOÁN SPORTAI**
+
+left side
+
+**[#FFE4E6] Nhóm Nghiệp vụ & Vận hành (BR & UR)
+***[#FEF08A] Điểm nghẽn: Trùng lịch (Overbooking)
+****[#BAE6FD] Yêu cầu BR-01: Triệt tiêu 100% trùng lịch đặt sân
+****[#E9D5FF] Yêu cầu UR-01: Khách hàng xem lịch trống tức thì (Real-time)
+***[#FEF08A] Điểm nghẽn: Thất thoát tiền giờ & Bán chui
+****[#BAE6FD] Yêu cầu BR-02: Thất thoát dưới 1% doanh thu thực tế
+****[#E9D5FF] Yêu cầu UR-02: Quản lý theo dõi lịch và thu chi từ xa
+***[#FEF08A] Điểm nghẽn: Giờ thấp điểm vắng khách
+****[#BAE6FD] Yêu cầu BR-03: Tăng 25% tỷ lệ lấp đầy giờ vắng (Off-peak)
+****[#E9D5FF] Yêu cầu UR-03: Khách nhận ưu đãi Flash Sale & Gợi ý ghép đội
+
+right side
+
+**[#D1FAE5] Nhóm Phi Chức Năng (NFR - ISO 25010)
+***[#FEF08A] Hiệu năng & Độ trễ (Performance)
+****[#E0E7FF] NFR-01: Phản hồi Chatbot AI dưới 2s (Timeout Gemini 8s)
+****[#E0E7FF] NFR-02: Tải trang danh mục sân dưới 1s (API Response < 1s)
+***[#FEF08A] Bảo mật & An toàn (Security)
+****[#E0E7FF] NFR-03: Phân quyền 2 lớp (RBAC JWT + Tool Dispatcher role='admin')
+****[#E0E7FF] NFR-04: Bảo mật API Key tuyệt đối (Không rò rỉ Client, .env Zero-Trust)
+***[#FEF08A] Tính sẵn sàng & Chịu tải (Reliability & Concurrency)
+****[#E0E7FF] NFR-05: Chặn 100% Race Condition bằng Partial Unique Index (HTTP 409)
+****[#E0E7FF] NFR-06: Tính sẵn sàng 99.9% (Tự động chuyển Fallback Rule Engine)
+
+**[#FDE68A] Ràng buộc Hệ thống (CON)
+***[#BBF7D0] CON-01: Tái sử dụng Camera IP sẵn có chuẩn RTSP
+***[#BBF7D0] CON-02: Công tắc cơ Bypass phần cứng phòng sự cố ngắt mạng
+
+@endmindmap

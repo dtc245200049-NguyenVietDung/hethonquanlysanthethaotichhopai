@@ -1,0 +1,194 @@
+@startuml
+!theme plain
+skinparam style strictuml
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+skinparam classAttributeIconSize 0
+
+skinparam package {
+    BackgroundColor #F8FAFC
+    BorderColor #475569
+    FontColor #0F172A
+    FontStyle bold
+}
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    ArrowColor #2563EB
+    BorderColor #2563EB
+    HeaderBackgroundColor #EFF6FF
+}
+
+title <size:15><b>BIỂU ĐỒ LỚP PHÂN TẦNG BOUNDARY - CONTROL - ENTITY (BCE)</b></size>\n<size:11><i>Dự án: SportAI - Chuẩn hóa đồng bộ 100% theo backend/server.js & SKILL.md</i></size>
+
+' ================= BOUNDARY LAYER =================
+package "Boundary (Giao diện Người dùng)" #F0FDF4 {
+    class ChatbotWidget <<Boundary>> {
+        + renderMessageHistory() : void
+        + sendChatMessage(prompt : String) : void
+        + displayActionCards(courts : List) : void
+        + triggerQuickBooking(courtId : Integer) : void
+    }
+
+    class AdminDashboardView <<Boundary>> {
+        + displayKPIStats(revenue : Number, orders : Number) : void
+        + renderBookingTable(statusFilter : String) : void
+        + handleApproveOrder(id : Integer) : void
+        + handleRejectOrder(id : Integer) : void
+        + sendAIExecuteCommand(query : String) : void
+    }
+
+    class CustomerBookingView <<Boundary>> {
+        + renderCourtGrid() : void
+        + submitBookingForm(bookingData : Object) : void
+        + displayConflictAlert(msg : String) : void
+    }
+}
+
+' ================= CONTROL LAYER =================
+package "Control (Điều khiển Nghiệp vụ & AI Dispatcher)" #EFF6FF {
+    class AuthController <<Control>> {
+        + login(username, password) : Token
+        + authenticateToken(req, res, next) : void
+        + requireRole(requiredRole : String) : Middleware
+    }
+
+    class BookingController <<Control>> {
+        + getAllCourts(isFlashSale : Boolean) : List
+        + createBooking(name, courtId, time, amount) : Response
+        + updateBookingStatus(id, status) : Response
+        + checkOverbooking(courtId, date, time) : Boolean
+    }
+
+    class AIServiceHandler <<Control>> {
+        - systemInstruction : String
+        - toolDeclarations : Array
+        + processChatMessage(message, history, userContext, db) : Promise<Object>
+        + buildPromptContext(systemInstruction, tools) : Object
+        + fallbackLocalNLU(message, db) : Object
+    }
+
+    class AIToolDispatcher <<Control>> {
+        + dispatchToolExecution(toolName, args, userContext, db) : Promise<Object>
+        - handleGetAvailableCourts(args, db) : Object
+        - handleGetCourtDetails(args, db) : Object
+        - handleRecommendBooking(args, db) : Object
+        - handleGenerateRevenueReport(args, userContext, db) : Object
+    }
+
+    class AdminAIController <<Control>> {
+        + executeCommand(query, role) : Response
+        + triggerFlashSale(durationMinutes : Integer) : void
+        + autoSimulateBookings(count : Integer) : void
+    }
+}
+
+' ================= ENTITY LAYER =================
+package "Entity (Thực thể Dữ liệu SQLite 3NF)" #FEFCE8 {
+    class Users <<Entity>> {
+        + id : INTEGER {PK}
+        + username : TEXT {UK}
+        + password_hash : TEXT
+        + fullName : TEXT
+        + role : TEXT ['customer', 'admin']
+        + createdAt : DATETIME
+    }
+
+    class SanTheThao <<Entity>> {
+        + id : INTEGER {PK}
+        + tenSan : TEXT
+        + loaiSan : TEXT
+        + giaTienGio : INTEGER
+        + hinhAnh : TEXT
+        + trangThai : TEXT ['active', 'inactive']
+    }
+
+    class LichDatSan <<Entity>> {
+        + id : INTEGER {PK}
+        + idSan : INTEGER {FK}
+        + idUser : INTEGER {FK, NULLABLE}
+        + tenKhachHang : TEXT
+        + ngayDat : TEXT
+        + khungGio : TEXT
+        + gioBatDau : TEXT
+        + gioKetThuc : TEXT
+        + trangThai : TEXT ['pending', 'confirmed', 'rejected']
+        + tongTien : INTEGER
+        + createdAt : DATETIME
+    }
+
+    class HoaDonDoanhThu <<Entity>> {
+        + id : INTEGER {PK}
+        + idLichDat : INTEGER {FK, UK}
+        + tongTien : INTEGER
+        + ngayThanhToan : TEXT
+        + phuongThuc : TEXT
+    }
+
+    class ChatHistory <<Entity>> {
+        + id : INTEGER {PK}
+        + sessionId : TEXT {INDEX}
+        + idUser : INTEGER {FK, NULLABLE}
+        + role : TEXT ['user', 'model']
+        + message : TEXT
+        + createdAt : DATETIME
+    }
+}
+
+' ================= EXTERNAL COMPONENT =================
+package "External Services" #FDF2F8 {
+    class GeminiAPI <<External>> {
+        + generateContent(contents, tools, systemInstruction) : JSON
+    }
+}
+
+' ================= RELATIONSHIPS =================
+' Boundary -> Control
+ChatbotWidget ..> AIServiceHandler : POST /api/chat
+ChatbotWidget ..> BookingController : POST /api/bookings
+CustomerBookingView ..> BookingController : GET /api/courts, POST /api/bookings
+AdminDashboardView ..> AuthController : POST /api/auth/login
+AdminDashboardView ..> BookingController : GET /api/bookings, PATCH /api/bookings/:id/status
+AdminDashboardView ..> AdminAIController : POST /api/admin/ai-execute
+
+' Control -> Control
+AIServiceHandler --> AIToolDispatcher : Điều phối thực thi Tool
+AIServiceHandler ..> AuthController : Verify RBAC userContext
+
+' Control -> External
+AIServiceHandler --> GeminiAPI : Function Calling (2-pass loop)
+
+' Control -> Entity (Database Queries)
+BookingController ..> SanTheThao : Query sân hoạt động
+BookingController ..> LichDatSan : Insert/Update/Kiểm tra trùng lịch 409
+BookingController ..> HoaDonDoanhThu : Tự động chèn Hóa đơn khi confirmed
+AdminAIController ..> LichDatSan : Giả lập đơn / Dọn dẹp DB
+AIToolDispatcher ..> SanTheThao : Tool 1, 2 (Lọc sân trống & giá)
+AIToolDispatcher ..> LichDatSan : Tool 3 (Đề xuất & kiểm tra lịch)
+AIToolDispatcher ..> HoaDonDoanhThu : Tool 4 (Doanh thu admin)
+AIServiceHandler ..> ChatHistory : Lưu lịch sử chat & Multi-turn
+AuthController ..> Users : Xác thực mật khẩu & cấp JWT
+
+' Entity Relationships
+Users "1" *-- "0..*" LichDatSan : đặt
+Users "1" *-- "0..*" ChatHistory : sở hữu
+SanTheThao "1" *-- "0..*" LichDatSan : chứa
+LichDatSan "1" *-- "0..1" HoaDonDoanhThu : sinh ra
+
+note bottom of AIToolDispatcher
+  <b>RBAC Lớp 2 (Hard Enforcement):</b>
+  Chặn thực thi Tool <i>generate_revenue_report</i>
+  ngay tại Dispatcher nếu <b>userContext.role != 'admin'</b>
+end note
+
+note bottom of BookingController
+  <b>Cơ chế Chống Trùng Lịch (409 Conflict):</b>
+  Khóa đặt sân nếu tồn tại bản ghi cùng idSan,
+  ngayDat, khungGio với trangThai IN ('pending', 'confirmed')
+end note
+
+@enduml
+

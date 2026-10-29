@@ -1,0 +1,92 @@
+@startuml
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam style strictuml
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+
+skinparam sequence {
+    ParticipantBorderColor #1E3A8A
+    ParticipantBackgroundColor #EFF6FF
+    ParticipantFontColor #0F172A
+    LifeLineBorderColor #2563EB
+    LifeLineBackgroundColor #DBEAFE
+    ArrowColor #1E3A8A
+}
+
+title <size:15><b>SƠ ĐỒ TUẦN TỰ: CHỦ SÂN TRÍCH XUẤT BÁO CÁO DOANH THU QUA AI CHATBOT</b></size>\n<size:11><i>Thay thế img_3.png - Chuẩn hóa RBAC 2 lớp, Gemini Tool Calling generate_revenue_report & SQLite</i></size>
+
+actor "Chủ sân / Quản lý\n(Admin)" as Admin
+boundary "Admin Dashboard\n(React UI)" as UI
+control "Backend API\n(POST /api/chat)" as Gateway
+control "geminiService\n(Agentic Loop)" as GeminiService
+entity "Gemini API\n(1.5/2.0 Flash)" as LLM
+control "aiToolDispatcher\n(RBAC Enforcement)" as Dispatcher
+database "CSDL SQLite\n(HoaDon & LichDatSan)" as DB
+database "CSDL SQLite\n(ChatHistory)" as ChatDB
+
+Admin -> UI : 1. Nhập câu hỏi quản trị:\n"Tổng hợp doanh thu và số lượt đặt tuần này giúp tôi"
+activate UI
+
+UI -> Gateway : 2. POST /api/chat\n{ message, sessionId, history }\n[Header: Bearer JWT Token của Admin]
+activate Gateway
+
+Gateway -> Gateway : 3. authenticateToken Middleware\n(Giải mã JWT: idUser=1, role='admin')
+
+Gateway -> ChatDB : 4. INSERT INTO ChatHistory\n(sessionId, idUser=1, role='user', message)
+activate ChatDB
+ChatDB --> Gateway : Ghi nhận thành công
+deactivate ChatDB
+
+Gateway -> GeminiService : 5. processChatMessage(msg, history, userContext, db)
+activate GeminiService
+
+GeminiService -> LLM : 6. sendMessage(message)\n[LƯỢT 1: Prompt + Dynamic UTC+7 System Instruction\n+ Filtered Tools (RBAC Lớp 1: Cấp quyền generate_revenue_report)]
+activate LLM
+
+LLM --> GeminiService : 7. Trả về Tool Call Decision:\ngenerate_revenue_report({\n  start_date: "2026-10-22",\n  end_date: "2026-10-28"\n})
+deactivate LLM
+
+GeminiService -> Dispatcher : 8. dispatchToolExecution('generate_revenue_report', args, userContext, db)
+activate Dispatcher
+
+group #F0FDF4 **RBAC Lớp 2 (Hard Enforcement tại Backend)**
+  Dispatcher -> Dispatcher : 9. Kiểm tra nghiêm ngặt:\nif (userContext.role !== 'admin') return 403 Forbidden\n(Đã xác thực: role == 'admin' -> Hợp lệ)
+end
+
+Dispatcher -> DB : 10. Parameterized SQL Query Doanh thu Thực:\nSELECT HoaDonDoanhThu.id, HoaDonDoanhThu.tongTien, HoaDonDoanhThu.ngayThanhToan,\n       SanTheThao.tenSan, LichDatSan.tenKhachHang\nFROM HoaDonDoanhThu\nJOIN LichDatSan ON HoaDonDoanhThu.idLichDat = LichDatSan.id\nJOIN SanTheThao ON LichDatSan.idSan = SanTheThao.id\nWHERE LichDatSan.trangThai = 'confirmed' AND DATE(ngayThanhToan) BETWEEN ? AND ?
+activate DB
+DB --> Dispatcher : 11. Trả về danh sách hóa đơn thực thu
+deactivate DB
+
+Dispatcher -> Dispatcher : 12. Tính toán tổng hợp:\n- Tổng doanh thu (VNĐ)\n- Tổng đơn confirmed\n- Tỷ lệ lấp đầy ước tính (%)
+
+Dispatcher --> GeminiService : 13. Tool Response JSON:\n{ status: "SUCCESS", totalRevenue: 12500000, totalOrders: 42, occupancyRate: "78%" }
+deactivate Dispatcher
+
+GeminiService -> LLM : 14. sendMessage(functionResponses)\n[LƯỢT 2: Gửi Tool Result JSON để tổng hợp báo cáo tài chính]
+activate LLM
+
+LLM --> GeminiService : 15. Phản hồi báo cáo chuyên sâu (Financial Synthesis):\n"📊 **BÁO CÁO DOANH THU TUẦN QUA (22/10 - 28/10/2026)**\n- Tổng doanh thu: **12.500.000 VNĐ**\n- Số lượt đặt hoàn tất: **42 lượt**\n- Tỷ lệ lấp đầy: **78%**\n💡 *Đánh giá*: Khung giờ 19:00 - 20:30 kín sân 100%, đề xuất chạy Flash Sale giờ trưa."
+deactivate LLM
+
+GeminiService --> Gateway : 16. Trả kết quả: { reply: "..." }
+deactivate GeminiService
+
+Gateway -> ChatDB : 17. INSERT INTO ChatHistory\n(sessionId, idUser=1, role='model', message)
+activate ChatDB
+ChatDB --> Gateway : Ghi nhận thành công
+deactivate ChatDB
+
+Gateway --> UI : 18. HTTP 200 OK\n{ reply: "...", sessionId }
+deactivate Gateway
+
+UI --> Admin : 19. Hiển thị Báo cáo Doanh thu Markdown trực quan\nkèm biểu đồ & nhận định kinh doanh
+deactivate UI
+
+@enduml
+

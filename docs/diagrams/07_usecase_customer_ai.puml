@@ -1,0 +1,75 @@
+@startuml
+!theme plain
+skinparam roundcorner 6
+skinparam shadowing false
+!option handwritten false
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam actor {
+    BackgroundColor #EFF6FF
+    BorderColor #1E3A8A
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1E3A8A
+    ArrowColor #1E3A8A
+}
+
+left to right direction
+
+title <size:15><b>GÓI USE CASE: TRỢ LÝ AI HỎI ĐÁP KHÁCH HÀNG (UC05)</b></size>\n<size:11><i>Kịch bản nghiệp vụ Trợ lý AI tư vấn, tra cứu sân và xử lý ngoại lệ (Fallback Engine)</i></size>
+
+actor "Khách hàng\n(Customer)" as User
+actor "Gemini AI Engine\n(Google Generative AI)" as AIEngine <<Secondary>>
+
+rectangle "Gói Chức năng: Trợ lý AI Hỏi Đáp Khách Hàng (SportAI Assistant)" #F8FAFC {
+    usecase "UC05: Hỏi đáp & Tư vấn qua Trợ lý AI\n(Hội thoại Đa lượt 24/7)" as UC05
+    
+    package "Tra cứu & Gợi ý Thông minh" #FFFFFF {
+        usecase "UC05.1: Tra cứu sân trống theo ngày & giờ" as UC05_1
+        usecase "UC05.2: Gợi ý khung giờ và sân theo ngân sách" as UC05_2
+        usecase "UC05.3: Tra cứu bảng giá & tiện ích sân" as UC05_3
+        usecase "UC05.4: Tư vấn dịch vụ đi kèm (HLV & Dụng cụ)" as UC05_4
+    }
+
+    package "Xử lý Ngoại lệ (Exception Handling)" #FFFFFF {
+        usecase "UC05.E1: Phản hồi dự phòng khi AI quá tải\n(Fallback Rule Engine nội bộ)" as UC05_E1
+        usecase "UC05.E2: Hướng dẫn khi yêu cầu ngoài phạm vi\n(Out-of-scope Prompt Guardrail)" as UC05_E2
+    }
+
+    ' Canh vị trí UC05 nằm bên trái các gói chức năng
+    UC05 -[hidden]right-> UC05_1
+    UC05 -[hidden]right-> UC05_E1
+}
+
+' Phân quyền Khách hàng
+User -- UC05
+
+' Chuyên biệt hóa kịch bản tra cứu (Generalization)
+UC05_1 -left-|> UC05
+UC05_2 -left-|> UC05
+UC05_3 -left-|> UC05
+UC05_4 -left-|> UC05
+
+' Luồng ngoại lệ mở rộng (Extend trỏ từ ngoại lệ về Use Case cơ sở)
+UC05_E1 .left.> UC05 : <<extend>>\n(Timeout >8s / Lỗi API)
+UC05_E2 .left.> UC05 : <<extend>>\n(Yêu cầu phi thể thao)
+
+' Tương tác với Hệ thống AI Engine
+UC05 -- AIEngine : Cung cấp AI Service\n& Function Calling
+
+note right of UC05_E2
+  <b>Cơ chế An toàn (Graceful Degradation):</b>
+  * 8s timeout với Gemini API.
+  * Tự động chuyển Fallback Rule Engine khi lỗi.
+  * Guardrail từ chối câu hỏi phi thể thao.
+end note
+
+note right of UC05_4
+  <b>Phạm vi:</b>
+  UC05.4 thuộc Phase 2.
+end note
+
+@enduml
